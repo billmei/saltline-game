@@ -55055,6 +55055,8 @@ float metalnessFactor = metalness * slORM.b;
         m = [
           {
             id: "relay_a",
+            step: 0,
+            goal: "Cut relay A in the container yard",
             label: "Relay A \u2014 Yard",
             zone: "yard",
             pos: Rt(1.5, 0, 7.5),
@@ -55062,6 +55064,8 @@ float metalnessFactor = metalness * slORM.b;
           },
           {
             id: "relay_b",
+            step: 1,
+            goal: "Cut relay B inside the transit shed",
             label: "Relay B \u2014 Shed",
             zone: "shed",
             pos: Rt(i.relayPos.x, Zs.FLOOR, i.relayPos.z),
@@ -55069,6 +55073,8 @@ float metalnessFactor = metalness * slORM.b;
           },
           {
             id: "relay_c",
+            step: 2,
+            goal: "Cut relay C on the quay",
             label: "Relay C \u2014 Quay",
             zone: "quay",
             pos: Rt(s.relayPos.x, 0, s.relayPos.z),
@@ -55423,7 +55429,9 @@ float metalnessFactor = metalness * slORM.b;
         wall(-3.6, -5.15, 0.15, -4.85, 1.1),
         wall(-12.15, -4.85, -11.85, -1.7, 1.1),
         wall(-12.15, 1.7, -11.85, 4.85, 1.1));
-      let core = c("relay_node", -7.6, 0, ss, { seed: 7 }, 0);
+      let core = c("relay_node", -7.6, 0, ss, { seed: 7 }, 0),
+        feedA = c("relay_node", -19.2, 12.4, 0, { seed: 8 }, 0),
+        feedB = c("relay_node", 4.6, -15.2, Math.PI, { seed: 9 }, 0);
       (c("shelf_rack", -11.2, 3.6, ss, { seed: 71 }),
         c("toolbox_cart", -10.9, -3.4, 0.3, { seed: 72 }),
         c("generator", -14.6, -2.8, ss, { seed: 73 }),
@@ -55548,8 +55556,10 @@ float metalnessFactor = metalness * slORM.b;
       }
       let merged = ig(t.staticRoot);
       ((merged.name = "level-merged"), e.add(merged), e.add(t.dynRoot));
-      for (let z = core.children.length - 1; z >= 0; z--) core.remove(core.children[z]);
-      t.dynRoot.add(core);
+      for (let R of [core, feedA, feedB]) {
+        for (let z = R.children.length - 1; z >= 0; z--) R.remove(R.children[z]);
+        t.dynRoot.add(R);
+      }
       let tris = 0;
       merged.traverse((R) => {
         if (R.isMesh) {
@@ -55640,8 +55650,35 @@ float metalnessFactor = metalness * slORM.b;
         playerStart: { pos: Rt(25.2, 0, 19.6), yaw: ss },
         objectives: [
           {
+            id: "feed_a",
+            step: 0,
+            goal: "Cut the two power feeds to the core",
+            prompt: "Cut feed A",
+            wave: { gull: 2, hound: 1 },
+            label: "Feed A \u2014 Tank farm",
+            zone: "tanks",
+            pos: Rt(-19.2, 0, 12.4),
+            object: feedA,
+          },
+          {
+            id: "feed_b",
+            step: 0,
+            goal: "Cut the two power feeds to the core",
+            prompt: "Cut feed B",
+            wave: { gull: 2, hound: 2 },
+            label: "Feed B \u2014 Pipe rack",
+            zone: "yard",
+            pos: Rt(4.6, 0, -15.2),
+            object: feedB,
+          },
+          {
             id: "core",
-            label: "Core console — Pump house",
+            short: "C",
+            step: 1,
+            final: "purge",
+            goal: "Start the purge at the core console",
+            prompt: "Start purge",
+            label: "Core console \u2014 Pump house",
             zone: "core",
             pos: corePos,
             object: core,
@@ -88236,25 +88273,30 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           clock: "Saltline Terminal \xB7 05:42",
           premise:
             "The port\u2019s security net has gone feral. Cut its three uplinks. Reach the boat.",
-          modeNote: "Cut three relays and reach the boat. About five minutes.",
+          modeNote:
+            "Chapter 1 \xB7 The Uplinks. Cut relays A, B and C in turn, then reach the boat.",
+          debriefP:
+            "Three uplinks cut and the berth is quiet. But on the ride out, Control picks up a signal from Berth 7: the Harbormaster is still running.",
           deadLabel: "Relays cut",
           debriefK: "Berth 4 \xB7 Debrief",
           debriefH: "Saltline is dark",
-          loc: "Saltline Terminal \xB7 Berth 4 \xB7 05:42",
-          locSub: "Port Authority Breach Unit \u2014 one breacher, no backup",
+          loc: "Chapter 1 \xB7 The Uplinks",
+          locSub: "Saltline Terminal \xB7 Berth 4 \xB7 05:42 \u2014 one breacher, no backup",
         },
         2: {
           tag: "B7",
           clock: "Bunker Pier \xB7 06:20",
           premise:
-            "The uplinks are dark. The Harbormaster has fled into its core. Purge it.",
+            "The uplinks are dark. The Harbormaster has fled into its core. Cut its power and purge it.",
           modeNote:
-            "Start the purge at the core and hold the pump house until it finishes. About four minutes.",
+            "Chapter 2 \xB7 The Core. Cut the two power feeds, start the purge, hold the pump house, then reach the boat.",
+          debriefP:
+            "The core burned itself out and every machine on the terminal dropped where it stood. Saltline belongs to the port again.",
           deadLabel: "Purge",
           debriefK: "Berth 7 \xB7 Debrief",
           debriefH: "The Harbormaster is gone",
-          loc: "Saltline Terminal \xB7 Berth 7 \xB7 06:20",
-          locSub: "Same night, same breacher \u2014 the boat put you ashore at the bunker pier",
+          loc: "Chapter 2 \xB7 The Core",
+          locSub: "Saltline Terminal \xB7 Berth 7 \xB7 06:20 \u2014 the boat put you ashore at the bunker pier",
         },
       }[SALT_LEVEL];
     function goLevel(lv) {
@@ -88306,13 +88348,13 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         [3, "Compact"],
       ],
       uT = [
-        ["mission", "Mission"],
+        ["mission", "Story"],
         ["holdout", "Holdout"],
       ],
       nL = {
         mission: SALT_TEXT.modeNote,
         holdout:
-          "Endless waves that keep growing. Resupply between waves. How long can you hold?",
+          "Not part of the story. Endless waves that keep growing. Resupply between waves. How long can you hold?",
       },
       ab = [
         ["standard", "Standard"],
@@ -88336,7 +88378,6 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           Number.isFinite(e.fov) && (n.fov = Math.min(95, Math.max(60, e.fov))),
           ab.some((t) => t[0] === e.difficulty) &&
             (n.difficulty = e.difficulty),
-          uT.some((t) => t[0] === e.mode) && (n.mode = e.mode),
           cT.some((t) => t[0] === e.view) && (n.view = e.view));
       } catch {}
       return n;
@@ -88443,6 +88484,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
     <section class="m-screen m-card m-debrief" data-s="complete" aria-label="Debrief">
       <div class="m-k">${SALT_TEXT.debriefK}</div>
       <h2 class="m-h">${SALT_TEXT.debriefH}</h2>
+      <p class="m-line">${SALT_TEXT.debriefP}</p>
       <div class="m-rating"><span>Rating</span><b data-f="rating">Clean</b></div>
       <dl class="m-stats">
         <div><dt>Time</dt><dd data-f="time">00:00</dd></div>
@@ -88450,7 +88492,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         <div><dt>Machines destroyed</dt><dd data-f="kills">0</dd></div>
         <div><dt>Retries</dt><dd data-f="retries">0</dd></div>
       </dl>
-      <div class="m-actions col">${SALT_LEVEL === 1 ? '<button class="btn primary" data-act="golevel" data-lv="2">Continue to Berth 7</button><button class="btn" data-act="redeploy">Redeploy</button>' : '<button class="btn primary" data-act="redeploy">Redeploy</button><button class="btn" data-act="golevel" data-lv="1">Replay Berth 4</button>'}</div>
+      <div class="m-actions col">${SALT_LEVEL === 1 ? '<button class="btn primary" data-act="golevel" data-lv="2">Next chapter \xB7 The Core</button><button class="btn" data-act="redeploy">Redeploy</button>' : '<button class="btn primary" data-act="redeploy">Redeploy</button><button class="btn" data-act="golevel" data-lv="1">Replay Berth 4</button>'}</div>
     </section>
 
     <div class="panel" role="dialog" aria-modal="true" aria-label="Settings and controls" tabindex="-1" hidden>
@@ -88999,11 +89041,13 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       ],
       Vu = SALT_LEVEL === 2 ? {
         intro:
-          "Breacher, Control. The uplinks are dark, but the Harbormaster crawled back into its core \u2014 pump house, Berth 7. Start the purge.",
+          "Breacher, Control. The uplinks are dark, but the Harbormaster crawled back into its core at Berth 7. Cut its two power feeds first.",
         contact: "It has seen you. Gulls fly, Hounds walk. Put them down.",
         cut: [
-          "Purge is running. It knows what you are doing. Hold that pump house.",
+          "One feed down. It is rerouting through the other \u2014 cut that too.",
+          "Both feeds dark. It is boxed into the pump house. Get to the core console.",
         ],
+        purge: "Purge is running. It knows what you are doing. Hold that pump house.",
         mid: "Halfway. It is pulling machines off the whole terminal. Stay on the console.",
         stall: "Purge stalls without you. Get back under that roof.",
         all: "Purge complete. The Harbormaster is gone. Boat is back at the quay ladder \u2014 go.",
@@ -89372,6 +89416,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           (g.kills = 0),
           (g.wavesCleared = 0),
           (g.purge = null),
+          (g.step = 0),
           h(C.difficulty),
           (g.relays = k().map((Y, he) => {
             let V = (/([a-z0-9])$/i.exec(String(Y.id || "")) || [
@@ -89383,7 +89428,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               {
                 o: Y,
                 id: Y.id || "relay_" + he,
-                short: V,
+                step: Y.step || 0,
+                short: Y.short || V,
                 t: 0,
                 cut: !1,
                 cutting: !1,
@@ -89401,7 +89447,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         }
         (J(),
           o.setRelays && o.setRelays(0, g.relays.length),
-          o.setTally && o.setTally(p() ? "Stand by" : s.purge ? "Core" : null),
+          o.setTally && o.setTally(p() ? "Stand by" : null),
           p() || ue());
       }
       function W(Y, he) {
@@ -89415,7 +89461,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       function J() {
         if (!o.setMarkers) return;
         let Y = g.relays
-          .filter((he) => !he.cut)
+          .filter((he) => !he.cut && he.step === g.step)
           .map((he) => ({
             id: he.id,
             short: he.short,
@@ -89490,10 +89536,12 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               ? "Catch your breath"
               : "Machines inbound";
         if (g.allCut) return "Get to the boat";
-        if (s.purge)
-          return g.purge
-            ? "Hold the pump house"
-            : "Start the purge at the core";
+        if (g.purge) return "Hold the pump house";
+        let cur = g.relays.filter((V) => !V.cut && V.step === g.step);
+        if (cur.length && cur[0].o.goal)
+          return cur.length > 1 || !g.relays.some((V) => V.cut && V.step === g.step)
+            ? cur[0].o.goal
+            : cur[0].o.goal.replace(/^Cut the two power feeds/, "Cut the last power feed");
         let Y = g.relays.length - g.cut;
         return g.cut === 0
           ? "Cut the three uplink relays"
@@ -89647,7 +89695,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             });
       }
       function de(Y) {
-        let he = xi.waves[Math.min(Y, xi.waves.length - 1)],
+        let he =
+            typeof Y == "object" ? Y : xi.waves[Math.min(Y, xi.waves.length - 1)],
           V = [];
         for (let Re = 0; Re < he.gull; Re++) V.push("gull");
         for (let Re = 0; Re < he.hound; Re++)
@@ -89743,7 +89792,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         let Y = null,
           he = xi.interactRange;
         for (let V of g.relays) {
-          if (V.cut) continue;
+          if (V.cut || V.step !== g.step) continue;
           let ne = V.o.pos.x - i.pos.x,
             ye = V.o.pos.z - i.pos.z,
             Te = Math.hypot(ne, ye);
@@ -89777,7 +89826,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
                   n.events.emit("objective:progress", { id: ne.id, t: 0 }))));
         he && !he.cut
           ? o.setPrompt &&
-            o.setPrompt(s.purge ? "Start purge" : "Cut relay " + he.short, Is(he.t))
+            o.setPrompt(he.o.prompt || "Cut relay " + he.short, Is(he.t))
           : o.setPrompt && o.setPrompt(null);
         let V = s.extraction;
         if (V && V.pos) {
@@ -89806,9 +89855,10 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           o.setRelays && o.setRelays(g.cut, he),
           o.setPrompt && o.setPrompt(null),
           i.addShake(0.18),
-          s.purge
+          g.relays.some((V) => !V.cut && V.step === g.step) || g.step++,
+          Y.o.final === "purge"
             ? purgeStart()
-            : (de(g.cut - 1),
+            : (de(Y.o.wave || g.cut - 1),
           g.cut >= he
             ? ((g.allCut = !0),
               (g.pursuitLeft = xi.pursuitExtra),
@@ -89824,10 +89874,10 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       // the breacher stays near the core. Machines arrive in three waves plus a
       // steady trickle; when it completes the boat comes back.
       function purgeStart() {
-        ((g.purge = { t: 0, waves: 1, trickle: 8, stallT: 0, pct: -1, half: !1 }),
+        ((g.purge = { t: 0, waves: 1, trickle: 8, left: 6, stallT: 0, pct: -1, half: !1 }),
           de(0),
           a(n.enemies, "alert", s.purge.pos, 90),
-          o.radio && o.radio(Vu.cut[0], 3.6),
+          o.radio && o.radio(Vu.purge, 3.6),
           o.setTally && o.setTally("Purge 0%"));
       }
       function purgeTick(Y) {
@@ -89860,11 +89910,13 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           !P0.half &&
             f0 >= 0.5 &&
             ((P0.half = !0), o.radio && o.radio(Vu.mid, 3.6)),
-          (P0.trickle -= Y),
+          near && (P0.trickle -= Y),
           P0.trickle <= 0 &&
-            ((P0.trickle = 7),
+            P0.left > 0 &&
+            ((P0.trickle = 9),
             !g.queue.length && se() < xi.pursuitMinAlive + 1))
         ) {
+          P0.left--;
           let V = n.rng() < 0.6 ? "gull" : "hound";
           g.queue.push({ type: V, pos: O(V, { from: cfg.pos }), at: g.time + 0.5 });
         }
@@ -89887,10 +89939,10 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           o.clearRadio && o.clearRadio(),
           l.setDead({
             time: g.time,
-            relays: s.purge
-              ? Math.round(g.purge ? Math.min(1, g.purge.t / s.purge.seconds) * 100 : 0) + "%"
+            relays: g.purge
+              ? Math.round(Math.min(1, g.purge.t / s.purge.seconds) * 100) + "%"
               : g.cut,
-            total: s.purge ? null : g.relays.length,
+            total: g.purge ? null : g.relays.length,
             holdout: p() ? b() : null,
           }),
           A("dead"));
