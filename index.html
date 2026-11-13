@@ -307,6 +307,26 @@
   .h-cm.extract i {
     background: var(--bone);
   }
+  .h-cm.enemy,
+  .h-wm.enemy {
+    color: var(--alarm);
+  }
+  .h-cm.enemy i,
+  .h-wm.enemy i {
+    transform: none;
+    border-radius: 50%;
+    background: rgba(255, 90, 64, 0.35);
+  }
+  .h-wm.enemy {
+    opacity: 0.9;
+  }
+  .h-wm.enemy.near {
+    opacity: 0.9;
+  }
+  .h-cm.gone,
+  .h-wm.gone {
+    display: none;
+  }
 
   /* objective tracker */
   .h-obj {
@@ -88047,6 +88067,17 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             ye.matrixWorldInverse.copy(ye.matrixWorld).invert());
           let $e = J / 2 - 14;
           for (let Ke of ge) {
+            if (Ke.live) {
+              let on = !!Ke.live.on;
+              if (
+                (on !== Ke.shown &&
+                  ((Ke.shown = on),
+                  Ke.cEl.classList.toggle("gone", !on),
+                  Ke.wEl.classList.toggle("gone", !on)),
+                !on)
+              )
+                continue;
+            }
             let Bt = Ke.pos.x - V.pos.x,
               Gt = Ke.pos.z - V.pos.z,
               vi = Math.round(Math.hypot(Bt, Gt));
@@ -88065,7 +88096,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               ce
                 .set(
                   Ke.pos.x,
-                  Ke.pos.y + (Ke.kind === "extract" ? 1.2 : 1.9),
+                  Ke.pos.y + (Ke.lift ?? (Ke.kind === "extract" ? 1.2 : 1.9)),
                   Ke.pos.z,
                 )
                 .project(ye));
@@ -88357,6 +88388,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           "Not part of the story. Endless waves that keep growing. Resupply between waves. How long can you hold?",
       },
       ab = [
+        ["easy", "Easy"],
         ["standard", "Standard"],
         ["hard", "Hard"],
         ["brutal", "Brutal"],
@@ -88605,7 +88637,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               ? `Quality was picked for this device (${W || "default"}). Lower it if the frame rate struggles.`
               : "Quality changes apply at once; shadows and reflections may take a moment to rebuild."),
           (c("qnote").textContent +=
-            " Difficulty applies to machines that arrive from now on."));
+            " Difficulty applies to machines that arrive from now on. Easy and Standard mark the nearest machine on the HUD."));
       }
       (u.addEventListener("input", () => {
         ((i.sens = +u.value), m("sens"), x(), cc(i));
@@ -88932,6 +88964,38 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         titleFov: 50,
       },
       lb = {
+        easy: {
+          label: "Easy",
+          gull: {
+            hp: 30,
+            boltDamage: 5,
+            telegraph: 0.7,
+            cooldown: [2.4, 4],
+            spreadFar: 0.08,
+            spreadNear: 0.03,
+          },
+          hound: {
+            hp: 100,
+            shotDamage: 4,
+            burst: 3,
+            cooldown: [2.2, 3.6],
+            lungeDamage: 10,
+            runSpeed: 4,
+          },
+          ai: { maxTokens: 1, maxTokensCrowd: 2, tokenGap: 1.6 },
+          player: { regenDelay: 3, regenRate: 32 },
+          flow: {
+            patrol: { gull: 1, hound: 1 },
+            waves: [
+              { gull: 2, hound: 1 },
+              { gull: 3, hound: 1 },
+              { gull: 3, hound: 2 },
+            ],
+            maxAlive: 7,
+            pursuitEvery: 9,
+            pursuitExtra: 3,
+          },
+        },
         standard: { label: "Standard" },
         hard: {
           label: "Hard",
@@ -89081,7 +89145,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         },
         l = hT(n, {
           difficulty(Y) {
-            h(Y);
+            (h(Y), C.state !== "title" && J());
           },
           deploy() {
             (a(n.audio, "resume"), r.requestLock(), G({}));
@@ -89458,6 +89522,23 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           console.error("[game] relay setState threw", V);
         }
       }
+      // Easy and Standard point a red marker at the nearest live machine.
+      let eMark = { on: !1, pos: new K() },
+        enemyMarksOn = () => C.difficulty === "easy" || C.difficulty === "standard";
+      function trackNearest() {
+        let best = null,
+          bd = 1e9;
+        if (enemyMarksOn()) {
+          let list = (n.enemies && n.enemies.list) || [];
+          for (let V = 0; V < list.length; V++) {
+            let ne = list[V];
+            if (!ne || !ne.alive || !ne.pos) continue;
+            let d = ne.pos.distanceToSquared(i.pos);
+            d < bd && ((bd = d), (best = ne));
+          }
+        }
+        ((eMark.on = !!best), best && eMark.pos.copy(best.pos));
+      }
       function J() {
         if (!o.setMarkers) return;
         let Y = g.relays
@@ -89469,7 +89550,17 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             pos: he.o.pos,
             kind: "relay",
           }));
-        (g.purge &&
+        (enemyMarksOn() &&
+          Y.push({
+            id: "enemy",
+            short: "",
+            label: "Nearest machine",
+            pos: eMark.pos,
+            live: eMark,
+            lift: 0.9,
+            kind: "enemy",
+          }),
+          g.purge &&
           !g.allCut &&
           Y.push({
             id: "hold",
@@ -90050,7 +90141,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             )
               return (le(), !1);
             if ((ge(Y), C.state !== "playing")) return !0;
-            (g.purge && !g.allCut && !p() && purgeTick(Y),
+            (trackNearest(),
+              g.purge && !g.allCut && !p() && purgeTick(Y),
               $(Y),
               p() && y(Y),
               (g.alertT = Math.max(0, g.alertT - Y)),
