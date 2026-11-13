@@ -54309,7 +54309,7 @@ float metalnessFactor = metalness * slORM.b;
       );
     }
     var pw = { X: 30, LADDER_Z: 20, RAILS: [18.5, 28.5], Z0: -30, Z1: 28 };
-    function mw(n) {
+    function mw(n, bare = !1) {
       let {
           M: e,
           box: t,
@@ -54476,6 +54476,8 @@ float metalnessFactor = metalness * slORM.b;
             i(v, T - 0.34, 0, w - 0.38, T + 0.34, 0.04, w + 0.38),
             a(T - 0.28, 0, w - 0.36, T + 0.28, 0.75, w + 0.36, "metal"));
       }
+      // Bare: just the quay edge, ladder, fenders, bollards and crane rails.
+      if (bare) return { relayPos: new K(23, 0, 0), extraction: new K(29, 0, f) };
       return (
         Sv(n, 23.3, -15.4, 2, !0, 0.02),
         Sv(n, 23.7, 14.4, 2, !0, -0.025),
@@ -55274,6 +55276,423 @@ float metalnessFactor = metalness * slORM.b;
         cam: [-32, 1.7, 6],
         target: [0, 2.4, 6.4],
         update: (t) => e.update(t),
+      };
+    }
+    // Level 2: Berth 7 bunker pier. Built with the same toolkit as Berth 4 (uw),
+    // but a different layout: a fuel tank farm to the north, a pipe rack across
+    // the south, and the pump house that shelters the Harbormaster's core in
+    // the middle. The breacher lands by boat at the quay ladder on the east.
+    async function Pg2(n) {
+      let e = new At();
+      ((e.name = "level"), n.scene.add(e));
+      let t = uw(n),
+        c = t.place,
+        col = t.col;
+      mw(t, !0);
+      // Perimeter fence: closed on three sides, the sea on the fourth.
+      let fence = (x0, z0, x1, z1, seed) => {
+        let d = Math.hypot(x1 - x0, z1 - z0),
+          m = Math.max(1, Math.round(d / 3.35)),
+          sx = d / (m * 3),
+          alongX = Math.abs(x1 - x0) > Math.abs(z1 - z0);
+        for (let k = 0; k < m; k++) {
+          let b = (k + 0.5) / m,
+            g = c(
+              "fence_panel",
+              x0 + (x1 - x0) * b,
+              z0 + (z1 - z0) * b,
+              alongX ? 0 : ss,
+              { seed: seed + k, posts: k === m - 1 ? "both" : "left" },
+              0,
+              { noCol: !0 },
+            );
+          g.scale.x = sx;
+        }
+        (col(
+          Math.min(x0, x1) - 0.05, 0, Math.min(z0, z1) - 0.05,
+          Math.max(x0, x1) + 0.05, 2.4, Math.max(z0, z1) + 0.05, "metal",
+        ),
+          col(
+            Math.min(x0, x1) - 0.3, 0, Math.min(z0, z1) - 0.3,
+            Math.max(x0, x1) + 0.3, 7, Math.max(z0, z1) + 0.3, "metal",
+            { playerOnly: !0 },
+          ));
+      };
+      (fence(-38, -30, 30, -30, 700),
+        fence(-38, 28, 30, 28, 800),
+        fence(-38, -30, -38, 28, 900));
+      // Tank farm: three fuel tanks inside a low bund wall.
+      let wall = (x0, z0, x1, z1, h = 0.9, mat = "concrete") => {
+        (t.slab(mat, x0, 0, z0, x1, h, z1, { bevel: 0.03 }),
+          col(x0, 0, z0, x1, h, z1, "concrete"));
+      };
+      (wall(-33, 13.8, -21.2, 14.2),
+        wall(-18.8, 13.8, -9.2, 14.2),
+        wall(-6.8, 13.8, 3.2, 14.2),
+        wall(-33.4, 13.8, -33, 27.6),
+        wall(2.8, 14.2, 3.2, 17.6),
+        wall(2.8, 21.4, 3.2, 27.6));
+      let tanks = [
+        [-27, 20.6, "TK-701"],
+        [-15, 20.6, "TK-702"],
+        [-3.2, 21, "TK-703"],
+      ];
+      for (let [x, z, name] of tanks) {
+        let r = 4.1,
+          h = 8.6;
+        (t.cyl("paint_white", r, h, x, h / 2, z, { seg: 36 }),
+          t.cyl("steel_galv", r + 0.04, 0.12, x, h - 0.06, z, { seg: 36 }),
+          t.cyl("steel_dark", r + 0.06, 0.4, x, 0.2, z, { seg: 36 }));
+        for (let y of [2.9, 5.8])
+          t.cyl("steel_worn", r + 0.03, 0.08, x, y, z, { seg: 36 });
+        // A cone-ish roof built from a tapered cylinder.
+        t.cyl("paint_grey", 0.6, 0.9, x, h + 0.45, z, { rTop: 0.6, seg: 36 });
+        t.cyl("paint_grey", r, 0.9, x, h + 0.45, z, { rTop: 0.8, seg: 36 });
+        t.label(name, 0.9, x, 4.6, z - r - 0.02, "z-", {
+          color: "black",
+          font: "stencil",
+          distress: 0.45,
+        });
+        // Approximate the round tank with three overlapping boxes.
+        let a = r * 0.93,
+          b = r * 0.4,
+          q = r * 0.7;
+        (col(x - a, 0, z - b, x + a, h, z + b, "metal"),
+          col(x - b, 0, z - a, x + b, h, z + a, "metal"),
+          col(x - q, 0, z - q, x + q, h, z + q, "metal"));
+        // Access ladder cage on the south face.
+        for (let s of [-0.3, 0.3])
+          t.rod("steel_galv", [x + s, 0, z - r - 0.25], [x + s, h + 0.6, z - r - 0.25], 0.025);
+        for (let y = 0.4; y < h; y += 0.4)
+          t.rod("steel_galv", [x - 0.3, y, z - r - 0.25], [x + 0.3, y, z - r - 0.25], 0.012);
+      }
+      // Overhead feed lines from the tank farm down to the pipe rack.
+      for (let [px, r, y] of [
+        [-20.6, 0.22, 4.4],
+        [-21.3, 0.16, 4.15],
+      ])
+        t.cyl("steel_rust", r, 26.4, px, y, 1.6, { axis: "z", seg: 14 });
+      for (let z of [8.4, -3.6]) {
+        (t.box("steel_dark", 0.3, 4.6, 0.3, -21, 2.3, z, { bevel: 0.02 }),
+          t.box("steel_dark", 1.6, 0.25, 0.3, -21, 4.0, z),
+          col(-21.15, 0, z - 0.15, -20.85, 4.6, z + 0.15, "metal"));
+      }
+      // Pipe rack across the south of the pier.
+      for (let x = -30; x <= 16; x += 6) {
+        for (let z of [-13.1, -10.9])
+          (t.box("steel_dark", 0.3, 5.4, 0.3, x, 2.7, z, { bevel: 0.02 }),
+            col(x - 0.15, 0, z - 0.15, x + 0.15, 5.4, z + 0.15, "metal"));
+        for (let y of [3.3, 4.9])
+          t.box("steel_dark", 0.24, 0.24, 2.5, x, y, -12);
+        t.box("hazard_stripes", 0.32, 1, 0.32, x, 0.5, -13.1, { bevel: 0.02 });
+      }
+      for (let [z, y, r, m] of [
+        [-12.7, 3.62, 0.28, "paint_yellow"],
+        [-12.0, 3.58, 0.22, "steel_rust"],
+        [-11.35, 3.66, 0.3, "paint_grey"],
+        [-12.5, 5.2, 0.18, "steel_galv"],
+        [-11.6, 5.24, 0.24, "paint_red"],
+      ])
+        t.cyl(m, r, 46.6, -7, y, z, { axis: "x", seg: 14 });
+      // Slab over the rack so gulls fly over it rather than through it.
+      col(-30.3, 3.3, -13.3, 16.3, 5.5, -10.7, "metal", { noNav: !0 });
+      // Pump house: open-sided canopy over the core console, ringed with low
+      // concrete walls the player can fight from.
+      let PX0 = -12.4,
+        PX1 = 0.4,
+        PZ0 = -5.4,
+        PZ1 = 5.4,
+        roofY = 4.3;
+      for (let x of [-12, -6, 0])
+        for (let z of [-5, 5])
+          (t.box("steel_dark", 0.34, roofY, 0.34, x, roofY / 2, z, { bevel: 0.02 }),
+            col(x - 0.17, 0, z - 0.17, x + 0.17, roofY, z + 0.17, "metal"));
+      (t.slab("steel_worn", PX0, roofY, PZ0, PX1, roofY + 0.22, PZ1),
+        col(PX0, roofY, PZ0, PX1, roofY + 0.22, PZ1, "metal"),
+        t.slab("hazard_stripes", PX0 - 0.03, roofY - 0.22, PZ0 - 0.03, PX1 + 0.03, roofY, PZ0 + 0.06),
+        t.slab("hazard_stripes", PX0 - 0.03, roofY - 0.22, PZ1 - 0.06, PX1 + 0.03, roofY, PZ1 + 0.03),
+        t.slab("steel_dark", PX1 - 0.06, roofY - 0.9, PZ0, PX1 + 0.04, roofY, PZ1),
+        t.label("BERTH 7 \xB7 BUNKER CONTROL", 0.42, PX1 + 0.05, roofY - 0.45, 0, "x+", {
+          color: "yellow",
+          font: "stencil",
+          distress: 0.3,
+        }));
+      (wall(-12.15, 4.85, -8.4, 5.15, 1.1),
+        wall(-3.6, 4.85, 0.15, 5.15, 1.1),
+        wall(-12.15, -5.15, -8.4, -4.85, 1.1),
+        wall(-3.6, -5.15, 0.15, -4.85, 1.1),
+        wall(-12.15, -4.85, -11.85, -1.7, 1.1),
+        wall(-12.15, 1.7, -11.85, 4.85, 1.1));
+      let core = c("relay_node", -7.6, 0, ss, { seed: 7 }, 0);
+      (c("shelf_rack", -11.2, 3.6, ss, { seed: 71 }),
+        c("toolbox_cart", -10.9, -3.4, 0.3, { seed: 72 }),
+        c("generator", -14.6, -2.8, ss, { seed: 73 }),
+        c("cable_reel", -14.4, 1.6, 0.6, { seed: 74 }),
+        c("sandbags", 1.6, -2.6, ss, { seed: 75 }),
+        c("sandbags", 1.6, 2.8, ss + 0.1, { seed: 76 }),
+        t.label("CORE", 0.6, -5.4, 0.006, 0, "y+", {
+          color: "yellow",
+          font: "stencil",
+          distress: 0.5,
+        }),
+        c("sign_post", 1.1, 5.6, ss, { seed: 77, sign: "hazard_voltage" }),
+        c("sign_post", -13, -5.8, 0, { seed: 78, sign: "hazard_general" }));
+      // Containers: a south-west laydown yard, an east block and some mid cover.
+      (t.stack(-30, -24, [
+        [40, "grey"],
+        [40, "blue"],
+      ]),
+        t.stack(-30.8, -19.6, [[20, "green"]]),
+        t.stack(-21.5, -21.5, [[20, "orange"], [20, "white"]], ss),
+        t.stack(-29.5, -6.5, [[20, "red"]], 0.04),
+        t.stack(8, -22.5, [
+          [40, "white"],
+          [40, "teal"],
+        ]),
+        t.stack(9.2, -27, [[20, "yellow", { doors: 0.6 }]], 0.05),
+        t.stack(9.4, 6.4, [[20, "red"]], ss),
+        t.stack(12.4, -4.4, [
+          [20, "blue"],
+          [20, "grey"],
+        ]),
+        t.stack(-22.4, 4.2, [[20, "teal", { reefer: !0 }]], ss),
+        t.stack(10, 19.2, [
+          [40, "orange"],
+          ["hc", "green"],
+        ], ss));
+      // Quay side dressing.
+      (c("pipe_stack", 22.2, -6.4, 0.05, { seed: 81 }),
+        c("pipe_stack", 22.6, 7.8, -0.08, { seed: 82 }),
+        c("tire_stack", 24.6, -15.2, 0, { seed: 83 }),
+        c("tire_stack", 25.5, -15.4, 0.4, { seed: 84 }),
+        c("crate_stack", 21.4, 13.6, 0.1, { seed: 85 }),
+        c("crate_wood", 22.8, 12.9, 0.3, { seed: 86 }),
+        c("jersey_barrier", 20.6, 0.4, ss + 0.06, { seed: 87 }),
+        c("jersey_barrier", 25.4, -2.2, 0.12, { seed: 88 }),
+        c("jersey_barrier", 25.2, 24.6, -0.08, { seed: 89 }),
+        c("ibc_tote", 23.4, 26, 0.05, { seed: 90 }),
+        c("forklift", 15.6, 13.2, 1.9, { seed: 91, forksUp: 0.2 }),
+        c("floodlight_stand", 17.6, 2.6, -0.4, { seed: 92 }),
+        c("pallet_stack", -2.4, -8.6, 0.12, { seed: 93 }),
+        c("crate_wood", -16.2, 8.6, 0.2, { seed: 94 }),
+        c("ibc_tote", -17.4, -7.6, 0.06, { seed: 95 }),
+        c("cardboard_boxes", 4.4, 8.4, 0.3, { seed: 96 }),
+        c("dumpster", -35.2, 2.4, ss, { seed: 97 }),
+        c("gas_cylinders", -16.4, -4.2, 0.1, { seed: 98 }),
+        c("barrel", -15.2, 7.6, 0, { seed: 99, color: "red" }),
+        c("barrel", 3.6, -7.2, 0, { seed: 100, color: "red" }),
+        c("barrel", -3.4, 12.6, 0, { seed: 101, color: "red" }),
+        c("barrel", 19.8, -20.2, 0, { seed: 102, color: "red" }),
+        c("barrel", 4.2, -6.6, 0.4, { seed: 103, color: "blue" }),
+        c("barrel", 21.5, -19.6, 0.2, { seed: 104, color: "yellow" }));
+      for (let [x, z, s] of [
+        [-35, -8, 1],
+        [-35, 11, 2],
+        [4.4, 11.6, 3],
+        [16.4, -8.4, 4],
+        [16.6, 25.8, 5],
+        [26.6, -28.6, 6],
+        [-12, -27.8, 7],
+      ])
+        c("light_mast", x, z, 0, { seed: 700 + s });
+      for (let [x, z] of [
+        [14.2, 0.6],
+        [14.6, 1.4],
+        [-24.6, -9.2],
+        [5.6, -14.6],
+      ])
+        c("traffic_cone", x, z, 0, { seed: Math.round(x * 7 + z * 3) });
+      t.staticRoot.updateMatrixWorld(!0);
+      // Same merge pipeline as Berth 4.
+      let l = [];
+      t.staticRoot.traverse((R) => {
+        R.userData &&
+          R.userData.noMerge &&
+          !(R.parent && dP(R.parent, t.staticRoot)) &&
+          l.push(R);
+      });
+      for (let R of l) t.dynRoot.attach(R);
+      let mats = new Set();
+      t.staticRoot.traverse((R) => {
+        R.isMesh && !Array.isArray(R.material) && mats.add(R.material);
+      });
+      let swap = new Map();
+      for (let R of mats)
+        if (
+          !(
+            !R.isMeshStandardMaterial ||
+            R.vertexColors ||
+            R.transparent ||
+            !R.name ||
+            !(n.mats.names || []).includes(R.name)
+          )
+        )
+          try {
+            let z = R.userData && R.userData.interior ? { interior: !0 } : {};
+            if (n.mats.get(R.name, z) !== R) continue;
+            let I = n.mats.get(R.name, { ...z, vertexColors: !0 });
+            I !== R && mats.has(I) && swap.set(R, I);
+          } catch {}
+      t.staticRoot.traverse((R) => {
+        if (!R.isMesh || Array.isArray(R.material)) return;
+        let z = swap.get(R.material);
+        z && (R.material = z);
+        let I = !R.material.transparent && !R.material.isMeshBasicMaterial;
+        ((R.castShadow = I), (R.receiveShadow = !R.material.isMeshBasicMaterial));
+      });
+      let atlas = { count: 0, update() {} };
+      try {
+        atlas = fw(t.staticRoot);
+      } catch (R) {
+        console.error("[level] label atlas failed", R);
+      }
+      let merged = ig(t.staticRoot);
+      ((merged.name = "level-merged"), e.add(merged), e.add(t.dynRoot));
+      for (let z = core.children.length - 1; z >= 0; z--) core.remove(core.children[z]);
+      t.dynRoot.add(core);
+      let tris = 0;
+      merged.traverse((R) => {
+        if (R.isMesh) {
+          let z = R.geometry;
+          tris += (z.index ? z.index.count : z.attributes.position.count) / 3;
+        }
+      });
+      let gnd = (x, z, zone) => ({ pos: Rt(x, 0, z), zone, type: "ground" }),
+        air = (x, y, z, zone) => ({ pos: Rt(x, y, z), zone, type: "air" }),
+        spawns = [
+          gnd(-34.5, -2, "west"),
+          gnd(-34.5, 8, "west"),
+          gnd(-26, -16.5, "yard"),
+          gnd(-16, -24, "yard"),
+          gnd(-4, -24, "yard"),
+          gnd(2, -17.5, "yard"),
+          gnd(-20, 12, "tanks"),
+          gnd(-8.2, 12, "tanks"),
+          gnd(-30, 10, "tanks"),
+          gnd(6, 25, "tanks"),
+          gnd(14, -17.6, "quay"),
+          gnd(16, 23, "quay"),
+          gnd(-26, 0, "west"),
+          air(-30, 11, 0, "west"),
+          air(-24, 13, -20, "yard"),
+          air(-6, 12.5, -22, "yard"),
+          air(-9, 14, 25, "tanks"),
+          air(-30, 13, 24, "tanks"),
+          air(8, 11, -26, "yard"),
+          air(4, 12, 26, "tanks"),
+          air(-36, 10, -24, "yard"),
+          air(14, 10, 12, "quay"),
+        ],
+        cover = [
+          Rt(-12.6, 0, -3.2),
+          Rt(-12.6, 0, 3.2),
+          Rt(-10.2, 0, 5.6),
+          Rt(-1.8, 0, 5.6),
+          Rt(-10.2, 0, -5.6),
+          Rt(-1.8, 0, -5.6),
+          Rt(-10.2, 0, 4.4),
+          Rt(-1.8, 0, -4.4),
+          Rt(2.4, 0, -2.6),
+          Rt(2.4, 0, 2.8),
+          Rt(8, 0, 6.4),
+          Rt(10.8, 0, 6.4),
+          Rt(12.4, 0, -6),
+          Rt(12.4, 0, -2.6),
+          Rt(-22.4, 0, 1),
+          Rt(-22.4, 0, 7.4),
+          Rt(-20, 0, 13.2),
+          Rt(-8, 0, 13.2),
+          Rt(-29.5, 0, -8),
+          Rt(-21.5, 0, -17.6),
+          Rt(-30, 0, -21.6),
+          Rt(8, 0, -20),
+          Rt(2.6, 0, -22.6),
+          Rt(20.6, 0, -1.2),
+          Rt(22.2, 0, -7.8),
+          Rt(22.6, 0, 9.2),
+          Rt(21.4, 0, 12.2),
+          Rt(15.6, 0, 11.6),
+          Rt(25.4, 0, -3.4),
+          Rt(-17.4, 0, -6.4),
+        ],
+        nav = n.physics.nav,
+        settle = (R) => {
+          if (!(!nav || !nav.isWalkable || R.y > 0.2 || nav.isWalkable(R.x, R.z)))
+            for (let z of [0.5, 1, 1.5, 2])
+              for (let I = 0; I < 8; I++) {
+                let L = R.x + Math.cos(I * 0.7854) * z,
+                  U = R.z + Math.sin(I * 0.7854) * z;
+                if (nav.isWalkable(L, U)) {
+                  ((R.x = L), (R.z = U));
+                  return;
+                }
+              }
+        };
+      (cover.forEach(settle),
+        spawns.forEach((R) => {
+          R.type === "ground" && settle(R.pos);
+        }));
+      let warned = !1,
+        corePos = Rt(-7.6, 0, 0);
+      return {
+        id: 2,
+        root: e,
+        playerStart: { pos: Rt(25.2, 0, 19.6), yaw: ss },
+        objectives: [
+          {
+            id: "core",
+            label: "Core console — Pump house",
+            zone: "core",
+            pos: corePos,
+            object: core,
+          },
+        ],
+        purge: { pos: corePos.clone(), radius: 10, seconds: 75 },
+        extraction: { pos: Rt(29, 0, 20), radius: 2.5 },
+        enemySpawns: spawns,
+        zones: [
+          { name: "quay", min: [16, -30], max: [40, 30] },
+          { name: "tanks", min: [-38, 12], max: [16, 30] },
+          { name: "core", min: [-16, -8], max: [4, 8] },
+          { name: "yard", min: [-38, -30], max: [16, -8] },
+        ],
+        interiorBoxes: [],
+        cinematicPath: [
+          { pos: [27.6, 1.8, 22], look: [14, 2.6, 16] },
+          { pos: [20.4, 2.2, 16.4], look: [6, 3.2, 8] },
+          { pos: [12.6, 2.6, 9.6], look: [-4, 2.4, 2] },
+          { pos: [4.4, 2.2, 3.4], look: [-8, 1.6, 0] },
+          { pos: [-2.6, 2.4, -7.6], look: [-12, 2.8, -12] },
+          { pos: [-14, 2.2, -9], look: [-26, 3.2, -12] },
+          { pos: [-25, 2.6, 6], look: [-15, 4.6, 18] },
+          { pos: [-12, 3.2, 10.2], look: [0, 5.4, 20] },
+          { pos: [2, 2.6, 11.6], look: [12, 3, 20] },
+        ],
+        coverPoints: cover,
+        skylights: [],
+        shedLights: [],
+        vantage: { stairsFoot: Rt(-2, 0, 8), roof: Rt(-6, 0, 0) },
+        stats: {
+          labelsAtlased: atlas.count,
+          containers: t.placed.filter((R) => R.name.startsWith("container")).length,
+          props: t.placed.length,
+          tris: Math.round(tris),
+          meshes: merged.children.length + pP(t.dynRoot),
+        },
+        placed: t.placed,
+        explosives: t.explosives,
+        groundSurfaceAt(R, z) {
+          return t.isMetal(R, z) ? "metal" : "concrete";
+        },
+        update(R) {
+          atlas.update(R);
+          for (let z = 0; z < t.updaters.length; z++)
+            try {
+              t.updaters[z](R);
+            } catch (I) {
+              warned || ((warned = !0), console.error("[level] prop update threw", I));
+            }
+        },
       };
     }
     var zv = {};
@@ -87802,6 +88221,48 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       }
       return (B(), X);
     }
+    // Which map this page load runs. Levels are built once at boot, so switching
+    // level reloads the page with ?level=N.
+    var SALT_LEVEL = (() => {
+        try {
+          return new URLSearchParams(location.search).get("level") === "2" ? 2 : 1;
+        } catch {
+          return 1;
+        }
+      })(),
+      SALT_TEXT = {
+        1: {
+          tag: "B4",
+          clock: "Saltline Terminal \xB7 05:42",
+          premise:
+            "The port\u2019s security net has gone feral. Cut its three uplinks. Reach the boat.",
+          modeNote: "Cut three relays and reach the boat. About five minutes.",
+          deadLabel: "Relays cut",
+          debriefK: "Berth 4 \xB7 Debrief",
+          debriefH: "Saltline is dark",
+          loc: "Saltline Terminal \xB7 Berth 4 \xB7 05:42",
+          locSub: "Port Authority Breach Unit \u2014 one breacher, no backup",
+        },
+        2: {
+          tag: "B7",
+          clock: "Bunker Pier \xB7 06:20",
+          premise:
+            "The uplinks are dark. The Harbormaster has fled into its core. Purge it.",
+          modeNote:
+            "Start the purge at the core and hold the pump house until it finishes. About four minutes.",
+          deadLabel: "Purge",
+          debriefK: "Berth 7 \xB7 Debrief",
+          debriefH: "The Harbormaster is gone",
+          loc: "Saltline Terminal \xB7 Berth 7 \xB7 06:20",
+          locSub: "Same night, same breacher \u2014 the boat put you ashore at the bunker pier",
+        },
+      }[SALT_LEVEL];
+    function goLevel(lv) {
+      if (!lv || +lv === SALT_LEVEL) return;
+      let u = new URL(location.href);
+      (+lv === 1 ? u.searchParams.delete("level") : u.searchParams.set("level", String(lv)),
+        location.assign(u.toString()));
+    }
     var oT = "legacy-v8";
     function rT() {
       return !!document.getElementById(oT);
@@ -87849,7 +88310,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         ["holdout", "Holdout"],
       ],
       nL = {
-        mission: "Cut three relays and reach the boat. About five minutes.",
+        mission: SALT_TEXT.modeNote,
         holdout:
           "Endless waves that keep growing. Resupply between waves. How long can you hold?",
       },
@@ -87936,9 +88397,9 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
 
     <section class="m-screen m-title" data-s="title" aria-label="Saltline">
       <div class="m-title-main">
-        <div class="m-eyebrow"><span class="m-tag">B4</span><span>Port Authority Breach Unit</span><span class="m-dim">Saltline Terminal \xB7 05:42</span></div>
+        <div class="m-eyebrow"><span class="m-tag">${SALT_TEXT.tag}</span><span>Port Authority Breach Unit</span><span class="m-dim">${SALT_TEXT.clock}</span></div>
         <h1 class="m-word">SALTLINE</h1>
-        <p class="m-premise">The port\u2019s security net has gone feral. Cut its three uplinks. Reach the boat.</p>
+        <p class="m-premise">${SALT_TEXT.premise}</p>
         <div class="m-actions">
           <button class="btn primary" data-act="deploy">Deploy</button>
           <button class="btn" data-act="settings">Settings</button>
@@ -87946,6 +88407,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         </div>
         <div class="m-pick">
           <label id="l-tm">Mode</label><div class="seg" role="group" aria-labelledby="l-tm">${uT.map((W) => `<button data-m="${W[0]}" aria-pressed="false">${W[1]}</button>`).join("")}</div>
+          <label id="l-tl">Map</label><div class="seg" role="group" aria-labelledby="l-tl"><button data-act="golevel" data-lv="1" aria-pressed="${SALT_LEVEL === 1}">1 \xB7 Berth 4</button><button data-act="golevel" data-lv="2" aria-pressed="${SALT_LEVEL === 2}">2 \xB7 Berth 7</button></div>
           <label id="l-td">Difficulty</label><div class="seg" role="group" aria-labelledby="l-td">${ab.map((W) => `<button data-d="${W[0]}" aria-pressed="false">${W[1]}</button>`).join("")}</div>
           <div class="m-pick-note" data-f="modenote"></div>
         </div>
@@ -87974,13 +88436,13 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
     <section class="m-screen m-card m-dead" data-s="dead" aria-label="Signal lost">
       <div class="m-k">Breacher down</div>
       <h2 class="m-h">Signal lost</h2>
-      <dl class="m-stats"><div><dt>Time survived</dt><dd data-f="dead-time">00:00</dd></div><div data-only="mission"><dt>Relays cut</dt><dd data-f="dead-relays">0/3</dd></div><div data-only="holdout"><dt>Waves cleared</dt><dd data-f="dead-wave">0</dd></div><div data-only="holdout"><dt>Machines destroyed</dt><dd data-f="dead-kills">0</dd></div><div data-only="holdout"><dt>Score</dt><dd data-f="dead-score">0</dd></div><div data-only="holdout"><dt>Best</dt><dd data-f="dead-best">0</dd></div></dl>
+      <dl class="m-stats"><div><dt>Time survived</dt><dd data-f="dead-time">00:00</dd></div><div data-only="mission"><dt>${SALT_TEXT.deadLabel}</dt><dd data-f="dead-relays">0/3</dd></div><div data-only="holdout"><dt>Waves cleared</dt><dd data-f="dead-wave">0</dd></div><div data-only="holdout"><dt>Machines destroyed</dt><dd data-f="dead-kills">0</dd></div><div data-only="holdout"><dt>Score</dt><dd data-f="dead-score">0</dd></div><div data-only="holdout"><dt>Best</dt><dd data-f="dead-best">0</dd></div></dl>
       <div class="m-actions col"><button class="btn primary" data-act="retry">Retry</button></div>
     </section>
 
     <section class="m-screen m-card m-debrief" data-s="complete" aria-label="Debrief">
-      <div class="m-k">Berth 4 \xB7 Debrief</div>
-      <h2 class="m-h">Saltline is dark</h2>
+      <div class="m-k">${SALT_TEXT.debriefK}</div>
+      <h2 class="m-h">${SALT_TEXT.debriefH}</h2>
       <div class="m-rating"><span>Rating</span><b data-f="rating">Clean</b></div>
       <dl class="m-stats">
         <div><dt>Time</dt><dd data-f="time">00:00</dd></div>
@@ -87988,7 +88450,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         <div><dt>Machines destroyed</dt><dd data-f="kills">0</dd></div>
         <div><dt>Retries</dt><dd data-f="retries">0</dd></div>
       </dl>
-      <div class="m-actions col"><button class="btn primary" data-act="redeploy">Redeploy</button></div>
+      <div class="m-actions col">${SALT_LEVEL === 1 ? '<button class="btn primary" data-act="golevel" data-lv="2">Continue to Berth 7</button><button class="btn" data-act="redeploy">Redeploy</button>' : '<button class="btn primary" data-act="redeploy">Redeploy</button><button class="btn" data-act="golevel" data-lv="1">Replay Berth 4</button>'}</div>
     </section>
 
     <div class="panel" role="dialog" aria-modal="true" aria-label="Settings and controls" tabindex="-1" hidden>
@@ -88022,7 +88484,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       </div>
     </div>
 
-    <div class="loc-card" aria-hidden="true"><i></i><b>Saltline Terminal \xB7 Berth 4 \xB7 05:42</b><span>Port Authority Breach Unit \u2014 one breacher, no backup</span></div>
+    <div class="loc-card" aria-hidden="true"><i></i><b>${SALT_TEXT.loc}</b><span>${SALT_TEXT.locSub}</span></div>
   `),
         t.appendChild(s));
       let o = (W) => s.querySelector(W),
@@ -88378,7 +88840,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           },
           setDead({ time: W, relays: J, total: G, holdout: te }) {
             ((c("dead-time").textContent = Z(W)),
-              (c("dead-relays").textContent = `${J}/${G}`),
+              (c("dead-relays").textContent = G == null ? String(J) : `${J}/${G}`),
               te &&
                 ((c("dead-wave").textContent = String(te.waves)),
                 (c("dead-kills").textContent = String(te.kills)),
@@ -88535,7 +88997,19 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         "WEST",
         "NORTH-WEST",
       ],
-      Vu = {
+      Vu = SALT_LEVEL === 2 ? {
+        intro:
+          "Breacher, Control. The uplinks are dark, but the Harbormaster crawled back into its core \u2014 pump house, Berth 7. Start the purge.",
+        contact: "It has seen you. Gulls fly, Hounds walk. Put them down.",
+        cut: [
+          "Purge is running. It knows what you are doing. Hold that pump house.",
+        ],
+        mid: "Halfway. It is pulling machines off the whole terminal. Stay on the console.",
+        stall: "Purge stalls without you. Get back under that roof.",
+        all: "Purge complete. The Harbormaster is gone. Boat is back at the quay ladder \u2014 go.",
+        low: "You are hit hard. Get behind steel and breathe.",
+        done: "Breacher aboard. Saltline is quiet for good. Good work.",
+      } : {
         intro:
           "Breacher, this is Control. The Harbormaster holds the berth. Cut its three uplinks \u2014 yard, shed, quay.",
         contact: "It has seen you. Gulls fly, Hounds walk. Put them down.",
@@ -88585,6 +89059,10 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           },
           redeploy() {
             (a(n.audio, "resume"), r.requestLock(), G({ quick: !0 }));
+          },
+          golevel(Y) {
+            let he = Y && Y.target && Y.target.closest && Y.target.closest("button");
+            goLevel(he && he.dataset.lv);
           },
         });
       l.applySettings();
@@ -88755,6 +89233,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           score: 0,
           kills: 0,
           wavesCleared: 0,
+          purge: null,
         },
         E = 0,
         M = xi.introSeconds,
@@ -88892,6 +89371,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           (g.score = 0),
           (g.kills = 0),
           (g.wavesCleared = 0),
+          (g.purge = null),
           h(C.difficulty),
           (g.relays = k().map((Y, he) => {
             let V = (/([a-z0-9])$/i.exec(String(Y.id || "")) || [
@@ -88921,7 +89401,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         }
         (J(),
           o.setRelays && o.setRelays(0, g.relays.length),
-          o.setTally && o.setTally(p() ? "Stand by" : null),
+          o.setTally && o.setTally(p() ? "Stand by" : s.purge ? "Core" : null),
           p() || ue());
       }
       function W(Y, he) {
@@ -88943,7 +89423,16 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             pos: he.o.pos,
             kind: "relay",
           }));
-        (g.allCut &&
+        (g.purge &&
+          !g.allCut &&
+          Y.push({
+            id: "hold",
+            short: "P",
+            label: "Hold the pump house",
+            pos: s.purge.pos,
+            kind: "relay",
+          }),
+          g.allCut &&
           s.extraction &&
           Y.push({
             id: "extract",
@@ -89001,6 +89490,10 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               ? "Catch your breath"
               : "Machines inbound";
         if (g.allCut) return "Get to the boat";
+        if (s.purge)
+          return g.purge
+            ? "Hold the pump house"
+            : "Start the purge at the core";
         let Y = g.relays.length - g.cut;
         return g.cut === 0
           ? "Cut the three uplink relays"
@@ -89283,7 +89776,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
                   W(ne.o, "live"),
                   n.events.emit("objective:progress", { id: ne.id, t: 0 }))));
         he && !he.cut
-          ? o.setPrompt && o.setPrompt("Cut relay " + he.short, Is(he.t))
+          ? o.setPrompt &&
+            o.setPrompt(s.purge ? "Start purge" : "Cut relay " + he.short, Is(he.t))
           : o.setPrompt && o.setPrompt(null);
         let V = s.extraction;
         if (V && V.pos) {
@@ -89297,7 +89791,9 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               g.extractHint <= 0 &&
               ((g.extractHint = 8),
               o.message(
-                "Relays still live \u2014 the boat will not wait under fire",
+                s.purge
+                  ? "The core is still running \u2014 finish the purge first"
+                  : "Relays still live \u2014 the boat will not wait under fire",
                 3.5,
               )),
             (g.extractHint = Math.max(0, g.extractHint - Y)));
@@ -89310,7 +89806,9 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           o.setRelays && o.setRelays(g.cut, he),
           o.setPrompt && o.setPrompt(null),
           i.addShake(0.18),
-          de(g.cut - 1),
+          s.purge
+            ? purgeStart()
+            : (de(g.cut - 1),
           g.cut >= he
             ? ((g.allCut = !0),
               (g.pursuitLeft = xi.pursuitExtra),
@@ -89318,7 +89816,65 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               n.events.emit("objective:all", {}),
               o.radio && o.radio(Vu.all, 4.5))
             : o.radio &&
-              o.radio(Vu.cut[Math.min(g.cut - 1, Vu.cut.length - 1)], 3.6),
+              o.radio(Vu.cut[Math.min(g.cut - 1, Vu.cut.length - 1)], 3.6)),
+          o.setObjective(oe()),
+          J());
+      }
+      // Berth 7: once the console is triggered the purge only advances while
+      // the breacher stays near the core. Machines arrive in three waves plus a
+      // steady trickle; when it completes the boat comes back.
+      function purgeStart() {
+        ((g.purge = { t: 0, waves: 1, trickle: 8, stallT: 0, pct: -1, half: !1 }),
+          de(0),
+          a(n.enemies, "alert", s.purge.pos, 90),
+          o.radio && o.radio(Vu.cut[0], 3.6),
+          o.setTally && o.setTally("Purge 0%"));
+      }
+      function purgeTick(Y) {
+        let P0 = g.purge,
+          cfg = s.purge,
+          dx = cfg.pos.x - i.pos.x,
+          dz = cfg.pos.z - i.pos.z,
+          near =
+            i.alive &&
+            Math.hypot(dx, dz) < cfg.radius &&
+            Math.abs(cfg.pos.y - i.pos.y) < 3;
+        if (near) P0.t += Y;
+        else
+          ((P0.stallT -= Y),
+            P0.stallT <= 0 &&
+              ((P0.stallT = 6),
+              o.message("Purge stalled \u2014 get back to the core", 2.4),
+              P0.t > 0 && o.radio && o.radio(Vu.stall, 3)));
+        let f0 = Math.min(1, P0.t / cfg.seconds),
+          pc = Math.floor(f0 * 100);
+        if (
+          (pc !== P0.pct &&
+            ((P0.pct = pc),
+            o.setTally && o.setTally("Purge " + pc + "%"),
+            n.events.emit("objective:progress", { id: "purge", t: f0 })),
+          P0.waves === 1 && f0 >= 0.35 && ((P0.waves = 2), de(1)),
+          P0.waves === 2 &&
+            f0 >= 0.7 &&
+            ((P0.waves = 3), de(2), a(n.enemies, "alert", cfg.pos, 90)),
+          !P0.half &&
+            f0 >= 0.5 &&
+            ((P0.half = !0), o.radio && o.radio(Vu.mid, 3.6)),
+          (P0.trickle -= Y),
+          P0.trickle <= 0 &&
+            ((P0.trickle = 7),
+            !g.queue.length && se() < xi.pursuitMinAlive + 1))
+        ) {
+          let V = n.rng() < 0.6 ? "gull" : "hound";
+          g.queue.push({ type: V, pos: O(V, { from: cfg.pos }), at: g.time + 0.5 });
+        }
+        f0 >= 1 &&
+          ((g.allCut = !0),
+          (g.pursuitLeft = Math.ceil(xi.pursuitExtra / 2)),
+          (g.pursuitT = 10),
+          o.setTally && o.setTally("Purged"),
+          n.events.emit("objective:all", {}),
+          o.radio && o.radio(Vu.all, 4.5),
           o.setObjective(oe()),
           J());
       }
@@ -89331,8 +89887,10 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           o.clearRadio && o.clearRadio(),
           l.setDead({
             time: g.time,
-            relays: g.cut,
-            total: g.relays.length,
+            relays: s.purge
+              ? Math.round(g.purge ? Math.min(1, g.purge.t / s.purge.seconds) * 100 : 0) + "%"
+              : g.cut,
+            total: s.purge ? null : g.relays.length,
             holdout: p() ? b() : null,
           }),
           A("dead"));
@@ -89440,7 +89998,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             )
               return (le(), !1);
             if ((ge(Y), C.state !== "playing")) return !0;
-            ($(Y),
+            (g.purge && !g.allCut && !p() && purgeTick(Y),
+              $(Y),
               p() && y(Y),
               (g.alertT = Math.max(0, g.alertT - Y)),
               (g.waveHot = Math.max(0, g.waveHot - Y)));
@@ -89451,7 +90010,10 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               g.waveHot < 24 &&
               (g.waveHot = 0);
             let V =
-              g.allCut || g.queue.length || (g.waveHot > 0 && he > 0)
+              g.allCut ||
+              (g.purge && !p()) ||
+              g.queue.length ||
+              (g.waveHot > 0 && he > 0)
                 ? 1
                 : g.alertT > 0 || (he > 0 && fe(26))
                   ? 0.6
@@ -89678,7 +90240,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       } else {
         if (
           (await fa("Stacking containers", 0.34),
-          await r("level", "level", () => Pg(t), !0),
+          await r("level", "level", () => (SALT_LEVEL === 2 ? Pg2(t) : Pg(t)), !0),
           await fa("Raising the cranes", 0.5),
           await r("backdrop", "backdrop", () => Iv(t)),
           await fa("Flooding the apron", 0.58),
