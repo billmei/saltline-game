@@ -76493,6 +76493,9 @@ vObjP = position; vONrm = normal; vWNrm = normalize(mat3(modelMatrix) * normal);
         backOff: 0.026,
         reboundBy: 0.01,
       };
+    // Reload animation playback rate (1 = authored timing). 1.4 cuts a rifle
+    // tactical reload from 2.24s to 1.6s and a pistol reload from 1.5s to 1.07s.
+    var RELOAD_RATE = 1.4;
     var xU = new _0(),
       vU = new RE();
     var Us = K,
@@ -83189,7 +83192,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             ? ($e.t = l.reloadT)
             : $e.fresh
               ? ($e.fresh = !1)
-              : ($e.t += B),
+              : ($e.t += B * RELOAD_RATE),
             Y.reload($e, $e.t),
             $e.t >= $e.T &&
               l.reloadT == null &&
@@ -85045,9 +85048,13 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         rangeMax: 25,
         altMin: 4,
         altMax: 8,
-        maxSpeed: 8,
-        patrolSpeed: 3,
-        accel: 11,
+        maxSpeed: 5.5,
+        patrolSpeed: 2.2,
+        investigateSpeed: 4,
+        orbitSpeed: 2.6,
+        accel: 8,
+        hitRadius: 0.8,
+        hitSquash: 1.6,
         spreadFar: 0.065,
         spreadNear: 0.018,
         fireRange: 42,
@@ -85245,14 +85252,14 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         },
         _raycast(y, b, g, E) {
           let T = y.x - d.pos.x,
-            w = (y.y - d.pos.y + 0.03) * 2.3,
+            w = (y.y - d.pos.y + 0.03) * gn.hitSquash,
             S = y.z - d.pos.z,
             R = b.x,
-            z = b.y * 2.3,
+            z = b.y * gn.hitSquash,
             I = b.z,
             L = R * R + z * z + I * I,
             U = T * R + w * z + S * I,
-            k = T * T + w * w + S * S - 0.5 * 0.5,
+            k = T * T + w * w + S * S - gn.hitRadius * gn.hitRadius,
             C = U * U - L * k;
           if (C < 0) return !1;
           let A = (-U - Math.sqrt(C)) / L;
@@ -85263,7 +85270,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               (E.enemy = d),
               E.point.copy(y).addScaledVector(b, A),
               E.normal.copy(E.point).sub(d.pos),
-              (E.normal.y *= 2.3),
+              (E.normal.y *= gn.hitSquash),
               E.normal.normalize(),
               !0);
         },
@@ -85384,13 +85391,13 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
                   d.pos.z - d.lastKnown.z,
                   d.pos.x - d.lastKnown.x,
                 )))
-              : ((d.orbitA += ((d.orbitDir * (q ? 0.9 : 3.6)) / d.orbitR) * y),
+              : ((d.orbitA += ((d.orbitDir * (q ? 0.9 : gn.orbitSpeed)) / d.orbitR) * y),
                 (T = b.pos.x + Math.cos(d.orbitA) * d.orbitR),
                 (S = b.pos.z + Math.sin(d.orbitA) * d.orbitR),
                 (w = b.pos.y + d.alt)));
         } else
           d.mode === "investigate" || d.mode === "search"
-            ? ((_ = 5.5),
+            ? ((_ = gn.investigateSpeed),
               (d.orbitA += 0.5 * y),
               (T = d.lastKnown.x + Math.cos(d.orbitA) * 4.5),
               (S = d.lastKnown.z + Math.sin(d.orbitA) * 4.5),
@@ -88168,7 +88175,15 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             W.focus({ preventScroll: !0 });
           } catch {}
       }
-      let I = s.querySelector(".m-callout"),
+      // The menu markup no longer ships the version-8 callout, so fall back to a
+      // detached stand-in; without it the menu threw at startup and the game never booted.
+      let I =
+          s.querySelector(".m-callout") ||
+          Object.assign(document.createElement("aside"), {
+            className: "m-callout",
+            innerHTML:
+              '<button class="m-callout-tab"></button><button class="m-callout-x"></button>',
+          }),
         L = I.querySelector(".m-callout-tab"),
         U = "saltline.note";
       function k(W, J) {
