@@ -55056,7 +55056,7 @@ float metalnessFactor = metalness * slORM.b;
           {
             id: "relay_a",
             step: 0,
-            goal: "Cut relay A in the container yard",
+            goal: "Cut relay A in the yard",
             label: "Relay A \u2014 Yard",
             zone: "yard",
             pos: Rt(1.5, 0, 7.5),
@@ -55065,7 +55065,7 @@ float metalnessFactor = metalness * slORM.b;
           {
             id: "relay_b",
             step: 1,
-            goal: "Cut relay B inside the transit shed",
+            goal: "Cut relay B in the shed",
             label: "Relay B \u2014 Shed",
             zone: "shed",
             pos: Rt(i.relayPos.x, Zs.FLOOR, i.relayPos.z),
@@ -55652,7 +55652,7 @@ float metalnessFactor = metalness * slORM.b;
           {
             id: "feed_a",
             step: 0,
-            goal: "Cut the two power feeds to the core",
+            goal: "Cut both power feeds",
             prompt: "Cut feed A",
             wave: { gull: 2, hound: 1 },
             label: "Feed A \u2014 Tank farm",
@@ -55663,7 +55663,7 @@ float metalnessFactor = metalness * slORM.b;
           {
             id: "feed_b",
             step: 0,
-            goal: "Cut the two power feeds to the core",
+            goal: "Cut both power feeds",
             prompt: "Cut feed B",
             wave: { gull: 2, hound: 2 },
             label: "Feed B \u2014 Pipe rack",
@@ -55676,7 +55676,7 @@ float metalnessFactor = metalness * slORM.b;
             short: "C",
             step: 1,
             final: "purge",
-            goal: "Start the purge at the core console",
+            goal: "Start the purge at the core",
             prompt: "Start purge",
             label: "Core console \u2014 Pump house",
             zone: "core",
@@ -89541,7 +89541,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         if (cur.length && cur[0].o.goal)
           return cur.length > 1 || !g.relays.some((V) => V.cut && V.step === g.step)
             ? cur[0].o.goal
-            : cur[0].o.goal.replace(/^Cut the two power feeds/, "Cut the last power feed");
+            : cur[0].o.goal.replace(/^Cut both power feeds/, "Cut the last power feed");
         let Y = g.relays.length - g.cut;
         return g.cut === 0
           ? "Cut the three uplink relays"
