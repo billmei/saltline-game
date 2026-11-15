@@ -56606,8 +56606,8 @@ float metalnessFactor = metalness * slORM.b;
     // breacher with a visible laser, locks its aim for a beat, then fires a
     // single heavy shot along the locked line. Breaking line of sight during
     // tracking cancels the shot; moving during the lock makes it miss. They are
-    // not in enemies.list (so waves, pursuit and Holdout ignore them); instead
-    // enemies.raycast is wrapped so the breacher's shots can hit them.
+    // not in enemies.list (so waves, pursuit and Holdout ignore them); they
+    // register with xTargets so the breacher's shots can hit them.
     var HERON = {
       easy: { hp: 110, dmg: 20, track: 1.6, lock: 0.5, cool: [3.4, 5], gap: 2.4 },
       standard: { hp: 160, dmg: 30, track: 1.25, lock: 0.42, cool: [2.8, 4.2], gap: 1.8 },
@@ -56637,8 +56637,7 @@ float metalnessFactor = metalness * slORM.b;
         list = [],
         busy = null,
         gap = 0,
-        warned = !1,
-        wrapped = !1;
+        warned = !1;
       for (let d of defs) {
         let g = new At(),
           head = new At(),
@@ -56731,23 +56730,6 @@ float metalnessFactor = metalness * slORM.b;
       let face = (h) => {
         h.head.rotation.set(-Math.asin(Math.max(-1, Math.min(1, h.aim.y))), Math.atan2(h.aim.x, h.aim.z), 0, "YXZ");
       };
-      let wrap = () => {
-        let en = n.enemies;
-        if (wrapped || !en || !en.raycast) return;
-        wrapped = !0;
-        // Every new run starts with enemies.clear(), so that is the reset hook.
-        let clear = en.clear.bind(en);
-        en.clear = () => {
-          (clear(), api.reset(), api.onReset && api.onReset());
-        };
-        let orig = en.raycast.bind(en);
-        en.raycast = (o, dir, max = 300) => {
-          let hit = orig(o, dir, max),
-            out = hit || { dist: 1 / 0, point: V(0, 0, 0), normal: V(0, 0, 0), enemy: null, part: "body" };
-          for (let h of list) h.active && h.alive && h._raycast(o, dir, max, out);
-          return out.enemy ? out : null;
-        };
-      };
       let api = {
         list,
         reset() {
@@ -56771,7 +56753,7 @@ float metalnessFactor = metalness * slORM.b;
         },
         aliveCount: () => list.filter((h) => h.active && h.alive).length,
         update(dt) {
-          wrap();
+          xTargets(n).install();
           let p = n.player,
             playing = !n.game || n.game.state === "playing";
           gap = Math.max(0, gap - dt);
@@ -56842,7 +56824,586 @@ float metalnessFactor = metalness * slORM.b;
           }
         },
       };
-      return (api.reset(), api);
+      let reg = xTargets(n);
+      (reg.add(list),
+        reg.onReset(() => {
+          (api.reset(), api.onReset && api.onReset());
+        }),
+        api.reset());
+      return api;
+    }
+    // Extra shootable targets that are not in enemies.list (Herons, the
+    // Carrier's drive cells). enemies.raycast is wrapped so the breacher's
+    // shots can hit them, and enemies.clear, which starts every run, resets them.
+    function xTargets(n) {
+      if (n._xt) return n._xt;
+      let lists = [],
+        resets = [],
+        done = !1,
+        V = (x, y, z) => new K(x, y, z);
+      return (n._xt = {
+        add(list) {
+          lists.push(list);
+        },
+        onReset(fn) {
+          resets.push(fn);
+        },
+        install() {
+          let en = n.enemies;
+          if (done || !en || !en.raycast) return;
+          done = !0;
+          let clear = en.clear.bind(en);
+          en.clear = () => {
+            clear();
+            for (let fn of resets) fn();
+          };
+          let orig = en.raycast.bind(en);
+          en.raycast = (o, dir, max = 300) => {
+            let hit = orig(o, dir, max),
+              out = hit || { dist: 1 / 0, point: V(0, 0, 0), normal: V(0, 0, 0), enemy: null, part: "body" };
+            for (let list of lists) for (let h of list) h.active && h.alive && h._raycast(o, dir, max, out);
+            return out.enemy ? out : null;
+          };
+        },
+      });
+    }
+    // Level 5: the stack yard and straddle carrier SC-12, the Harbormaster's
+    // last body. The yard is four rows of single boxes. The carrier straddles a
+    // row and runs its length, so its wheels come down the aisles the breacher
+    // fights from. It only shows its three drive cells when it stops to vent.
+    var YARD5 = { rows: [-9, -3, 3, 9], x0: -20, x1: 20 };
+    async function Pg5(n) {
+      let e = new At();
+      ((e.name = "level"), n.scene.add(e));
+      let t = uw(n),
+        c = t.place,
+        col = t.col;
+      mw(t, !0);
+      let fence = (x0, z0, x1, z1, seed) => {
+        let d = Math.hypot(x1 - x0, z1 - z0),
+          m = Math.max(1, Math.round(d / 3.35)),
+          sx = d / (m * 3),
+          alongX = Math.abs(x1 - x0) > Math.abs(z1 - z0);
+        for (let k = 0; k < m; k++) {
+          let b = (k + 0.5) / m,
+            g = c(
+              "fence_panel",
+              x0 + (x1 - x0) * b,
+              z0 + (z1 - z0) * b,
+              alongX ? 0 : ss,
+              { seed: seed + k, posts: k === m - 1 ? "both" : "left" },
+              0,
+              { noCol: !0 },
+            );
+          g.scale.x = sx;
+        }
+        (col(
+          Math.min(x0, x1) - 0.05, 0, Math.min(z0, z1) - 0.05,
+          Math.max(x0, x1) + 0.05, 2.4, Math.max(z0, z1) + 0.05, "metal",
+        ),
+          col(
+            Math.min(x0, x1) - 0.3, 0, Math.min(z0, z1) - 0.3,
+            Math.max(x0, x1) + 0.3, 7, Math.max(z0, z1) + 0.3, "metal",
+            { playerOnly: !0 },
+          ));
+      };
+      (fence(-38, -30, 30, -30, 2700),
+        fence(-38, 28, 30, 28, 2800),
+        fence(-38, -30, -38, -4, 2900),
+        fence(-38, 4, -38, 28, 2950),
+        c("gate_arm", -38, -2.4, ss, { seed: 5 }, 0, { noCol: !0 }),
+        c("guard_booth", -35.6, 6.2, 0, { seed: 6 }),
+        col(-38.4, 0, -4, -37.9, 7, 4, "metal", { playerOnly: !0 }));
+      // The rows. One box high so the carrier clears them, broken in the
+      // middle and at odd places so the breacher can change aisle.
+      let rowBoxes = [
+        [-9, [[-8.2, 40, "blue"], [3.6, 20, "red"], [10.6, 20, "grey"]]],
+        [-3, [[-10.6, 20, "green"], [-3.6, 20, "white"], [8.2, 40, "orange"]]],
+        [3, [[-8.2, 40, "teal"], [4.4, 20, "yellow"], [11.2, 20, "blue"]]],
+        [9, [[-10.9, 20, "grey"], [-4.2, 20, "red"], [8.2, 40, "green"]]],
+      ];
+      for (let [z, boxes] of rowBoxes)
+        for (let [x, len, colr] of boxes) t.stack(x, z, [[len, colr]], 0, 0);
+      // Lane markings and row numbers on the ground.
+      for (let k = 0; k < YARD5.rows.length; k++)
+        t.label("ROW " + (k + 1), 0.7, -16.4, 0.006, YARD5.rows[k], "y+", {
+          color: "yellow",
+          font: "stencil",
+          distress: 0.5,
+        });
+      // Side bands the carrier never enters: taller stacks and loose cover.
+      (t.stack(-24, -22, [
+        [40, "white"],
+        [40, "blue"],
+      ]),
+        t.stack(-8, -21.5, [
+          [20, "orange"],
+          [20, "grey"],
+        ], ss),
+        t.stack(4, -23, [[40, "teal"]]),
+        t.stack(19, -21, [
+          [20, "red"],
+          [20, "green"],
+        ]),
+        t.stack(-22, 21, [
+          [20, "yellow"],
+          [20, "teal"],
+        ], ss),
+        t.stack(-9, 22.5, [[40, "grey"]]),
+        t.stack(6, 20.5, [
+          [40, "red"],
+          [40, "white"],
+        ]),
+        t.stack(21, 22.6, [[20, "blue"]], ss),
+        t.stack(-30.5, -13, [[20, "green"]], ss),
+        t.stack(-30.5, 14, [[20, "orange", { doors: 0.5 }]], ss));
+      (c("jersey_barrier", -27.4, -3.6, ss, { seed: 51 }),
+        c("jersey_barrier", -27.4, 3.6, ss, { seed: 52 }),
+        c("jersey_barrier", -13, -15.4, 0, { seed: 53 }),
+        c("jersey_barrier", 0, -15.6, 0.05, { seed: 54 }),
+        c("jersey_barrier", 12, -15.4, 0, { seed: 55 }),
+        c("jersey_barrier", -12, 15.4, 0, { seed: 56 }),
+        c("jersey_barrier", 1, 15.6, -0.05, { seed: 57 }),
+        c("jersey_barrier", 13, 15.4, 0, { seed: 58 }),
+        c("jersey_barrier", 27.2, -8, ss, { seed: 59 }),
+        c("jersey_barrier", 27.2, 6, ss, { seed: 60 }),
+        c("sandbags", -31, 0.8, ss, { seed: 61 }),
+        c("sandbags", 26.8, 14.6, ss, { seed: 62 }),
+        c("forklift", -15.6, -19.4, 0.6, { seed: 63, forksUp: 0.3 }),
+        c("pallet_stack", 13.4, 18.2, 0.1, { seed: 64 }),
+        c("crate_stack", -16.6, 18.6, 0.2, { seed: 65 }),
+        c("pipe_stack", 13.6, -17.4, 0, { seed: 66 }),
+        c("tire_stack", -2.6, 17.4, 0, { seed: 67 }),
+        c("dumpster", -34.6, -16.4, ss, { seed: 68 }),
+        c("generator", 25, -19.6, 0.1, { seed: 69 }),
+        c("floodlight_stand", -28.6, -8.4, 0.9, { seed: 70 }),
+        c("floodlight_stand", 26.4, 9.6, 3.6, { seed: 71 }),
+        c("barrel", -26.6, 9.4, 0, { seed: 72, color: "red" }),
+        c("barrel", 25.6, -13.4, 0, { seed: 73, color: "red" }),
+        c("barrel", -1.4, -17.2, 0, { seed: 74, color: "blue" }));
+      for (let [x, z, s] of [
+        [-34, -26, 1],
+        [-34, 24, 2],
+        [-2, -27.4, 3],
+        [-2, 26, 4],
+        [27, -27, 5],
+        [27.4, 26, 6],
+      ])
+        c("light_mast", x, z, 0, { seed: 2700 + s });
+      let { atlas, merged, tris } = lvFinish(n, e, t, []);
+      let boss = carrier5(n, e),
+        cellPos = [Rt(20, 2, -6), Rt(20, 2, 0), Rt(20, 3.3, -3)];
+      boss.marks = cellPos;
+      let gnd = (x, z, zone) => ({ pos: Rt(x, 0, z), zone, type: "ground" }),
+        air = (x, y, z, zone) => ({ pos: Rt(x, y, z), zone, type: "air" }),
+        spawns = [
+          gnd(-34, -20, "west"),
+          gnd(-34, 18, "west"),
+          gnd(0, -27, "south"),
+          gnd(0, 25, "north"),
+          air(-34, 12, -22, "west"),
+          air(-34, 12, 20, "west"),
+          air(-14, 13, -27, "south"),
+          air(10, 13, -27, "south"),
+          air(-14, 13, 25.5, "north"),
+          air(10, 13, 25.5, "north"),
+          air(28, 12, -24, "quay"),
+          air(28, 12, 10, "quay"),
+          air(-36, 11, 0, "west"),
+          air(0, 15, -29, "south"),
+        ],
+        cover = [
+          Rt(-27.4, 0, -2),
+          Rt(-27.4, 0, 2),
+          Rt(-13, 0, -16.2),
+          Rt(0, 0, -16.4),
+          Rt(12, 0, -16.2),
+          Rt(-12, 0, 16.2),
+          Rt(1, 0, 16.4),
+          Rt(13, 0, 16.2),
+          Rt(-24, 0, -20),
+          Rt(4, 0, -21.2),
+          Rt(-9, 0, 20.8),
+          Rt(6, 0, 18.6),
+          Rt(-30.5, 0, -9),
+          Rt(-30.5, 0, 10),
+          Rt(27.8, 0, -8),
+          Rt(27.8, 0, 6),
+        ],
+        warned = !1;
+      return {
+        id: 5,
+        root: e,
+        playerStart: { pos: Rt(-35, 0, 0), yaw: -ss },
+        objectives: ["a", "b", "c"].map((k, i) => ({
+          id: "cell_" + k,
+          short: k.toUpperCase(),
+          step: 0,
+          locked: !0,
+          goal: "Destroy the carrier\u2019s three drive cells",
+          prompt: "",
+          wave: { gull: 2 + i, hound: 0 },
+          label: "Drive cell",
+          zone: "rows",
+          pos: cellPos[i],
+        })),
+        noHounds: !0,
+        holdMsg: "The carrier is still running \u2014 the boat will not wait under fire",
+        extraction: { pos: Rt(29, 0, 20), radius: 2.5 },
+        enemySpawns: spawns,
+        zones: [
+          { name: "west", min: [-38, -30], max: [-24.5, 30] },
+          { name: "south", min: [-24.5, -30], max: [26, -12] },
+          { name: "rows", min: [-24.5, -12], max: [26, 12] },
+          { name: "north", min: [-24.5, 12], max: [26, 30] },
+          { name: "quay", min: [26, -30], max: [40, 30] },
+        ],
+        interiorBoxes: [],
+        cinematicPath: [
+          { pos: [-33, 1.9, 1], look: [-10, 3, 0] },
+          { pos: [-24, 2.2, -6], look: [0, 3, -4] },
+          { pos: [-12, 2.4, -6], look: [14, 4.4, -3] },
+          { pos: [2, 2.6, -6.2], look: [20, 4.6, -3] },
+          { pos: [12, 3, -12], look: [20, 4.4, -3] },
+          { pos: [25, 3.4, -12], look: [20, 4, -3] },
+          { pos: [27.5, 2.6, 2], look: [18, 4.6, -3] },
+          { pos: [14, 2.4, 12.4], look: [0, 2.6, 6] },
+          { pos: [-8, 2.2, 13], look: [-22, 2.4, 4] },
+        ],
+        coverPoints: cover,
+        skylights: [],
+        shedLights: [],
+        vantage: { stairsFoot: Rt(-26, 0, 0), roof: Rt(-20, 0, 0) },
+        boss,
+        stats: {
+          labelsAtlased: atlas.count,
+          containers: t.placed.filter((R) => R.name.startsWith("container")).length,
+          props: t.placed.length,
+          tris: Math.round(tris),
+          meshes: merged.children.length + pP(t.dynRoot),
+        },
+        placed: t.placed,
+        explosives: t.explosives,
+        groundSurfaceAt(R, z) {
+          return t.isMetal(R, z) ? "metal" : "concrete";
+        },
+        update(R) {
+          atlas.update(R);
+          try {
+            boss.update(Math.min(0.05, Math.max(0, +R || 0)));
+          } catch (I) {
+            warned || ((warned = !0), console.error("[level] carrier update threw", I));
+          }
+          for (let z = 0; z < t.updaters.length; z++)
+            try {
+              t.updaters[z](R);
+            } catch (I) {
+              warned || ((warned = !0), console.error("[level] prop update threw", I));
+            }
+        },
+      };
+    }
+    // Straddle carrier SC-12. Always lies along x. Cycle: shift sideways on an
+    // apron to the breacher's row, rev, run the row to the far apron, then stop
+    // and vent. Venting is the only time the three drive cells are open to
+    // fire. Each cell lost makes it faster and its vents shorter; with all
+    // three gone it stops venting and simply hunts until the breacher reaches
+    // the boat, where it follows them off the quay.
+    var CARRIER = {
+      easy: { hp: 520, ram: 22, shot: 3, burst: 3, tcool: [3, 4.4], speed: 6, vent: 7 },
+      standard: { hp: 720, ram: 34, shot: 5, burst: 4, tcool: [2.4, 3.6], speed: 7, vent: 6 },
+      hard: { hp: 920, ram: 48, shot: 7, burst: 5, tcool: [1.9, 3], speed: 8, vent: 5 },
+      brutal: { hp: 1080, ram: 62, shot: 9, burst: 6, tcool: [1.5, 2.5], speed: 8.8, vent: 4.4 },
+    };
+    function carrier5(n, root) {
+      let T3 = n.THREE || ut,
+        V = (x, y, z) => new K(x, y, z),
+        UP = V(0, 1, 0),
+        tmp = V(0, 0, 0),
+        tmp2 = V(0, 0, 0),
+        HL = 4.5,
+        BZ = 2.25,
+        BW = 0.5,
+        yel = n.mats.get("paint_yellow"),
+        dark = n.mats.get("steel_dark"),
+        haz = n.mats.get("hazard_stripes"),
+        glow = (hex) => new T3.MeshBasicMaterial({ color: hex }),
+        g = new At(),
+        mk = (geo, mat, x, y, z, par = g) => {
+          let m = new ht(geo, mat);
+          return (m.position.set(x, y, z), (m.castShadow = !0), par.add(m), m);
+        },
+        box = (w, h, d, mat, x, y, z, par) => mk(new T3.BoxGeometry(w, h, d), mat, x, y, z, par),
+        wheels = [],
+        tune = () => CARRIER[(n.game && n.game.difficulty) || "standard"] || CARRIER.standard,
+        story = () => !(n.game && n.game.run && n.game.run.mode === "holdout");
+      g.name = "carrier";
+      for (let s of [-1, 1]) {
+        (box(2 * HL, 0.9, 2 * BW, dark, 0, 1.15, s * BZ), box(2 * HL + 0.1, 0.25, 2 * BW + 0.1, haz, 0, 1.7, s * BZ));
+        for (let x of [-3.4, -1.2, 1.2, 3.4]) {
+          let w = mk(new T3.CylinderGeometry(0.7, 0.7, 0.55, 14), dark, x, 0.7, s * BZ);
+          ((w.rotation.x = Math.PI / 2), wheels.push(w));
+          let hub = mk(new T3.CylinderGeometry(0.25, 0.25, 0.6, 8), yel, x, 0.7, s * BZ);
+          ((hub.rotation.x = Math.PI / 2), wheels.push(hub));
+        }
+        for (let x of [-3.6, 3.6]) box(0.55, 5.1, 0.55, yel, x, 4.25, s * BZ);
+        box(2 * HL, 0.6, 0.6, yel, 0, 7, s * BZ);
+      }
+      for (let x of [-3.6, 0, 3.6]) box(0.5, 0.5, 2 * BZ, yel, x, 7, 0);
+      (box(6, 0.3, 2.4, yel, 0, 4.3, 0), box(1.5, 0.7, 1.5, dark, 0, 3.85, 0));
+      for (let x of [-2.6, 2.6]) for (let z of [-1, 1]) box(0.06, 2.4, 0.06, dark, x, 5.6, z);
+      (box(1.9, 1.7, 1.7, dark, 3.4, 5.7, BZ), box(1.95, 0.5, 1.75, glow(8394776), 3.4, 5.95, BZ), box(4, 0.5, 0.05, haz, 0, 7, -BZ - 0.31), box(4, 0.5, 0.05, haz, 0, 7, BZ + 0.31));
+      let beacons = [mk(new T3.SphereGeometry(0.16, 8, 6), glow(16733440), -4.3, 7.45, -BZ), mk(new T3.SphereGeometry(0.16, 8, 6), glow(16733440), 4.3, 7.45, BZ)];
+      // Turret on the top frame.
+      let turret = new At(),
+        gun = new At();
+      (turret.position.set(0, 7.3, 0), g.add(turret), mk(new T3.CylinderGeometry(0.5, 0.6, 0.4, 10), dark, 0, 0.2, 0, turret), gun.position.set(0, 0.6, 0), turret.add(gun), box(0.6, 0.45, 1, dark, 0, 0, 0, gun));
+      for (let s of [-0.14, 0.14]) {
+        let b = mk(new T3.CylinderGeometry(0.05, 0.05, 1.3, 6), dark, s, 0, 1, gun);
+        b.rotation.x = Math.PI / 2;
+      }
+      let eye = mk(new T3.SphereGeometry(0.1, 8, 6), glow(16721440), 0, 0.2, 0.45, gun);
+      // Drive cells: two on the sill beams, one under the belly.
+      let cells = [],
+        cellDef = [
+          { at: V(0, 2.35, -BZ - 0.75), side: -1 },
+          { at: V(0, 2.35, BZ + 0.75), side: 1 },
+          { at: V(0, 3.2, 0), side: 0 },
+        ];
+      for (let d of cellDef) {
+        let orb = mk(new T3.SphereGeometry(0.42, 14, 10), glow(16755200), d.at.x, d.at.y, d.at.z);
+        orb.castShadow = !1;
+        let sh = [];
+        if (d.side) {
+          (box(1.9, 1.3, 0.5, dark, 0, 2.35, d.side * (BZ + 0.5)), box(1.9, 0.12, 0.7, haz, 0, 3.05, d.side * (BZ + 0.75)));
+          for (let s of [-1, 1]) sh.push({ m: box(0.95, 1.2, 0.1, dark, s * 0.475, 2.35, d.side * (BZ + 1.2)), ax: "x", from: s * 0.475, to: s * 1.4 });
+        } else sh.push({ m: box(1.15, 0.95, 1.15, dark, 0, 3.2, 0), ax: "y", from: 3.2, to: 3.95 });
+        let cell = {
+          type: "drive cell",
+          def: d,
+          orb,
+          sh,
+          pos: V(0, 0, 0),
+          alive: !0,
+          active: !0,
+          hp: 1,
+          smokeT: 0,
+          damage(amt, point, dir) {
+            if (!cell.alive) return !1;
+            try {
+              n.fx.sparks(point || cell.pos, dir ? tmp.copy(dir).negate() : UP, st.open > 0.5 ? 9 : 4);
+            } catch {}
+            if (st.mode !== "vent" || st.open < 0.5) {
+              st.hintT <= 0 && ((st.hintT = 6), n.hud && n.hud.message && n.hud.message("Shutters closed \u2014 hit the cells when it vents", 2.6));
+              return (wake(), !1);
+            }
+            cell.hp -= amt;
+            if (cell.hp > 0) return !1;
+            ((cell.alive = !1), cell.orb.material.color.setRGB(0.05, 0.03, 0.02), st.dead++);
+            try {
+              (n.fx.explosion(cell.pos.clone(), 1.3), n.fx.debris && n.fx.debris(cell.pos, { count: 6 }), n.player && n.player.addShake && n.player.addShake(0.3));
+            } catch {}
+            (n.events.emit("enemy:killed", { enemy: cell, pos: cell.pos, type: "drive cell" }), n.game && n.game.debugCut && n.game.debugCut());
+            // Losing a cell ends the vent early.
+            st.mode === "vent" && (st.t = Math.max(st.t, tune().vent - 0.6));
+            return !0;
+          },
+          _raycast(o, dir, max, out) {
+            let ox = o.x - cell.pos.x,
+              oy = o.y - cell.pos.y,
+              oz = o.z - cell.pos.z,
+              b = ox * dir.x + oy * dir.y + oz * dir.z,
+              disc = b * b - (ox * ox + oy * oy + oz * oz - 0.36);
+            if (disc < 0) return !1;
+            let s = -b - Math.sqrt(disc);
+            if (s < 0 || s > max || s >= out.dist) return !1;
+            ((out.dist = s), (out.enemy = cell), (out.part = "body"), out.point.copy(o).addScaledVector(dir, s), out.normal.copy(out.point).sub(cell.pos).normalize());
+            return !0;
+          },
+        };
+        cells.push(cell);
+      }
+      root.add(g);
+      let st = { mode: "dormant", x: 0, z: 0, y: 0, row: 1, dir: -1, v: 0, t: 0, open: 0, dead: 0, hitT: 0, hintT: 0, shots: 0, shotT: 0, cool: 3, shakeT: 0, said: 0, roll: 0, sunk: !1 },
+        rows = YARD5.rows,
+        nearRow = (z) => {
+          let best = 0;
+          for (let k = 1; k < rows.length; k++) Math.abs(rows[k] - z) < Math.abs(rows[best] - z) && (best = k);
+          return best;
+        },
+        say = (key, dur = 3.6) => {
+          try {
+            n.hud && n.hud.radio && typeof Vu < "u" && Vu[key] && n.hud.radio(Vu[key], dur);
+          } catch {}
+        },
+        wake = () => {
+          st.mode === "dormant" && ((st.mode = "rev"), (st.t = 0), n.events.emit("enemy:alert", { enemy: api, pos: api.pos }), say("wake", 4));
+        },
+        place = () => {
+          (g.position.set(st.x, st.y, st.z), (g.rotation.z = st.roll));
+          for (let cl of cells) cl.pos.set(st.x + cl.def.at.x, st.y + cl.def.at.y, st.z + cl.def.at.z);
+          api.pos.set(st.x, 4, st.z);
+          // Objective markers ride on whichever cells are still alive.
+          if (api.marks) {
+            let live = cells.filter((cl) => cl.alive),
+              k = 0;
+            for (let i = st.dead; i < api.marks.length; i++) live[k] && api.marks[i].copy(live[k++].pos);
+          }
+        },
+        reset = () => {
+          Object.assign(st, { mode: "dormant", x: YARD5.x1, z: rows[1], y: 0, row: 1, dir: -1, v: 0, t: 0, open: 0, dead: 0, hitT: 0, hintT: 0, shots: 0, shotT: 0, cool: 3, shakeT: 0, said: 0, roll: 0, sunk: !1 });
+          let on = story();
+          g.visible = on;
+          for (let cl of cells) ((cl.active = on), (cl.alive = on), (cl.hp = tune().hp), cl.orb.material.color.setHex(16755200));
+          place();
+        },
+        // Wheels: anything of the breacher inside a bogie's footprint gets
+        // thrown clear, and hurt if the carrier is moving.
+        crush = (p, dt) => {
+          st.hitT = Math.max(0, st.hitT - dt);
+          if (!p.alive || p.pos.y > 1.7 || Math.abs(p.pos.x - st.x) > HL + 0.35) return;
+          for (let s of [-1, 1]) {
+            let bz = st.z + s * BZ,
+              dz = p.pos.z - bz;
+            if (Math.abs(dz) > BW + 0.36) continue;
+            // Inside the rows there is a box under the belly, so always throw outward.
+            let apron = Math.abs(st.x) > 15.6,
+              out = apron && Math.abs(dz) > 0.05 ? Math.sign(dz) : s;
+            ((p.pos.z = bz + out * (BW + 0.4)), p.vel && (p.vel.z = out * 5));
+            if (st.v > 1 && st.hitT <= 0 && !p.invulnerable) {
+              ((st.hitT = 0.9), p.damage(tune().ram, tmp.set(st.x, 1, bz)), p.addShake && p.addShake(0.5), n.events.emit("enemy:melee", { enemy: api, pos: tmp.clone() }));
+            }
+          }
+        },
+        fire = (p, dt, tn) => {
+          // Aim the turret, then fire bursts while there is a line to the breacher.
+          (tmp.copy(p.eye || p.pos), p.eye ? (tmp.y -= 0.35) : (tmp.y += 1.1));
+          let mz = tmp2.set(st.x, st.y + 7.9, st.z),
+            dx = tmp.x - mz.x,
+            dy = tmp.y - mz.y,
+            dz = tmp.z - mz.z,
+            flat = Math.hypot(dx, dz);
+          ((turret.rotation.y = Math.atan2(dx, dz)), (gun.rotation.x = Math.atan2(-dy, flat)));
+          st.cool = Math.max(0, st.cool - dt);
+          let can = st.mode !== "vent" && st.mode !== "dormant" && flat > 5 && flat < 70;
+          if (st.shots <= 0) {
+            can && st.cool <= 0 && n.physics.lineOfSight(mz, tmp) && ((st.shots = tn.burst + st.dead), (st.shotT = 0.45), n.events.emit("enemy:telegraph", { enemy: api, pos: mz, type: "hound", time: 0.45 }));
+            return;
+          }
+          st.shotT -= dt;
+          if (st.shotT > 0) return;
+          ((st.shotT = 0.12), st.shots--, st.shots <= 0 && (st.cool = tn.tcool[0] + Math.random() * (tn.tcool[1] - tn.tcool[0])));
+          let len = Math.hypot(dx, dy, dz) || 1,
+            sp = 0.035,
+            dir = V(dx / len + (Math.random() - 0.5) * sp, dy / len + (Math.random() - 0.5) * sp, dz / len + (Math.random() - 0.5) * sp).normalize(),
+            from = mz.clone().addScaledVector(dir, 1.6);
+          try {
+            let hit = n.physics.raycast(from, dir, 120);
+            (n.fx.muzzleFlash && n.fx.muzzleFlash(from, dir, { scale: 1.4 }),
+              n.fx.tracer && n.fx.tracer(from, from.clone().addScaledVector(dir, hit ? hit.dist : 60), { color: 16730658, speed: 160 }),
+              n.events.emit("enemy:fire", { enemy: api, pos: from, type: "hound" }),
+              n.combat.enemyShot(from, dir, { damage: tn.shot, range: 120 }));
+          } catch (err) {
+            console.error("[carrier] shot threw", err);
+          }
+        };
+      let api = {
+        type: "carrier",
+        pos: V(0, 4, 0),
+        state: st,
+        cells,
+        marks: null,
+        reset,
+        update(dt) {
+          let xt = xTargets(n);
+          xt.install();
+          if (!g.visible) return;
+          let p = n.player,
+            tn = tune(),
+            playing = !n.game || n.game.state === "playing",
+            done = n.game && n.game.state === "complete",
+            fast = 1 + 0.18 * st.dead,
+            wantOpen = st.mode === "vent" ? 1 : 0;
+          st.open += (wantOpen - st.open) * Math.min(1, dt * 6);
+          for (let cl of cells) {
+            for (let s of cl.sh) s.m.position[s.ax] = s.from + (s.to - s.from) * st.open;
+            if (cl.alive) {
+              let k = st.open > 0.5 ? 0.8 + 0.2 * Math.sin(n.time.t * 14) : 0.35;
+              cl.orb.material.color.setRGB(k, 0.62 * k, 0.05 * k);
+            } else if (((cl.smokeT -= dt), cl.smokeT <= 0 && !st.sunk)) {
+              cl.smokeT = 0.5;
+              try {
+                n.fx.smoke && n.fx.smoke(cl.pos, { size: 0.6, life: 1.4 });
+              } catch {}
+            }
+          }
+          let hot = st.mode === "rev" || st.mode === "hunt" || (st.mode === "run" && st.dead >= 3),
+            bl = hot ? 0.5 + 0.5 * Math.sin(n.time.t * 18) : 0.25;
+          for (let b of beacons) b.material.color.setRGB(bl, 0.33 * bl, 0);
+          eye.material.color.setRGB(st.shots > 0 ? 1 : 0.5, 0.1, 0.08);
+          if (done) {
+            // The breacher is on the boat: follow them off the quay.
+            if (st.sunk) return;
+            if (st.mode !== "plunge") ((st.mode = "plunge"), (st.v = Math.max(st.v, 6)));
+            ((st.v = Math.min(16, st.v + 9 * dt)), (st.x += st.v * dt));
+            if (st.x > 31.5) ((st.y -= (4 + (st.x - 31.5) * 2) * dt), (st.roll = Math.max(-0.5, st.roll - 0.5 * dt)));
+            if (st.y < -5) {
+              st.sunk = !0;
+              try {
+                (n.fx.splash && n.fx.splash(V(st.x, Kn.seaY, st.z), 3), n.fx.explosion(V(st.x, 0.5, st.z), 2.6));
+              } catch {}
+              g.visible = !1;
+            }
+            for (let w of wheels) w.rotation.y -= (st.v * dt) / 0.7;
+            place();
+            return;
+          }
+          if (!playing || !p) return;
+          st.hintT = Math.max(0, st.hintT - dt);
+          let moved = 0;
+          if (st.mode === "dormant") {
+            (p.pos.x > -27 || st.dead > 0) && wake();
+          } else if (st.mode === "shift") {
+            // Crab along the apron to the row the breacher is nearest.
+            let tz = rows[st.row],
+              d = tz - st.z,
+              stepZ = Math.sign(d) * Math.min(Math.abs(d), 4.2 * fast * dt);
+            ((st.z += stepZ), (st.v = Math.abs(stepZ) > 1e-4 ? 4.2 : 0));
+            Math.abs(tz - st.z) < 0.01 && ((st.z = tz), (st.mode = "rev"), (st.t = 0), n.events.emit("enemy:telegraph", { enemy: api, pos: api.pos, type: "hound", time: 1 }));
+          } else if (st.mode === "rev") {
+            ((st.t += dt), (st.v = 0));
+            st.t >= (st.dead >= 3 ? 0.6 : 1.1) && ((st.mode = "run"), (st.dir = st.x > 0 ? -1 : 1), (st.v = 1));
+          } else if (st.mode === "run") {
+            st.v = Math.min(tn.speed * fast, st.v + 7 * dt);
+            let tx = st.dir > 0 ? YARD5.x1 : YARD5.x0;
+            ((moved = st.dir * st.v * dt), (st.x += moved));
+            if ((st.dir > 0 && st.x >= tx) || (st.dir < 0 && st.x <= tx)) {
+              ((st.x = tx), (st.v = 0), (st.t = 0));
+              if (st.dead >= 3) ((st.mode = "shift"), (st.row = nearRow(p.pos.z)));
+              else {
+                st.mode = "vent";
+                n.events.emit("enemy:telegraph", { enemy: api, pos: api.pos, type: "gull", time: 1.2 });
+                st.said < 1 && ((st.said = 1), say("vent", 4));
+              }
+            }
+          } else if (st.mode === "vent") {
+            ((st.t += dt), (st.v = 0));
+            st.t >= tn.vent / (1 + 0.15 * st.dead) && ((st.mode = "shift"), (st.row = nearRow(p.pos.z)));
+          }
+          for (let w of wheels) w.rotation.y -= moved / 0.7;
+          // Ground shake as it comes past.
+          st.shakeT -= dt;
+          if (st.v > 2 && st.shakeT <= 0) {
+            st.shakeT = 0.25;
+            let d = Math.hypot(p.pos.x - st.x, p.pos.z - st.z);
+            d < 14 && p.addShake && p.addShake(0.09 * (1 - d / 14));
+          }
+          (place(), crush(p, dt), p.alive && fire(p, dt, tn));
+        },
+      };
+      let reg = xTargets(n);
+      (reg.add(cells), reg.onReset(reset), reset());
+      return api;
     }
     var zv = {};
     ar(zv, { create: () => Iv, showcase: () => _P });
@@ -60168,7 +60729,7 @@ uniform float uTime;
       // Berth 9 brings its own crane, and the Kittiwake is on the bottom by now.
       return SALT_LEVEL === 3
         ? kw(n, { only: ["boat", "sky"], boat: { x: -34.4, z: 18.4 } })
-        : SALT_LEVEL === 4
+        : SALT_LEVEL === 4 || SALT_LEVEL === 5
         ? kw(n, { only: ["boat", "sky"] })
         : kw(n, {});
     }
@@ -88856,7 +89417,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       let c = si(
           "div",
           "h-obj",
-          '<div class="h-k">Objective</div><div class="h-obj-t"></div><div class="h-relays"><span>Relays</span><i></i><i></i><i></i><b>0/3</b></div>',
+          '<div class="h-k">Objective</div><div class="h-obj-t"></div><div class="h-relays"><span>' + (SALT_TEXT.pips || "Relays") + '</span><i></i><i></i><i></i><b>0/3</b></div>',
         ),
         u = c.querySelector(".h-obj-t"),
         f = c.querySelector(".h-relays"),
@@ -89027,7 +89588,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         },
         setTally(he) {
           let V = he != null;
-          (f.classList.toggle("tally", V), (p.textContent = V ? he : "Relays"));
+          (f.classList.toggle("tally", V), (p.textContent = V ? he : SALT_TEXT.pips || "Relays"));
         },
         setRelays(he, V) {
           if (!(he === oe.done && V === oe.total)) {
@@ -89406,7 +89967,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
     var SALT_LEVEL = (() => {
         try {
           let lv = new URLSearchParams(location.search).get("level");
-          return lv === "2" ? 2 : lv === "3" ? 3 : lv === "4" ? 4 : 1;
+          return lv === "2" ? 2 : lv === "3" ? 3 : lv === "4" ? 4 : lv === "5" ? 5 : 1;
         } catch {
           return 1;
         }
@@ -89465,12 +90026,28 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           modeNote:
             "Chapter 4 \xB7 The Gantry. Cut the crane\u2019s power feed, lower the box to bridge the gap, cut the backup on the machinery deck, then get down to the boat.",
           debriefP:
-            "The backup is cut and the crane is dead steel. No copies, no beacons, no machines left standing. Saltline belongs to the port again.",
+            "The backup is cut and the crane is dead steel. But its last transmission was not a copy. It was an ignition order: in the stack yard, straddle carrier SC-12 has started its engine.",
           deadLabel: "Steps done",
           debriefK: "Berth 9 \xB7 Debrief",
-          debriefH: "The Harbormaster is gone",
+          debriefH: "The crane is dark",
           loc: "Chapter 4 \xB7 The Gantry",
           locSub: "Saltline Terminal \xB7 Berth 9 \xB7 07:30 \u2014 the truck left you at the west gate",
+        },
+        5: {
+          tag: "SY",
+          clock: "Stack Yard \xB7 08:05",
+          pips: "Cells",
+          premise:
+            "The Harbormaster has one body left: forty tonnes of straddle carrier. Break its drive cells. Do not get under the wheels.",
+          modeNote:
+            "Chapter 5 \xB7 The Carrier. The carrier runs the rows and its wheels come down the aisles. When it stops to vent, shoot its three drive cells. Then get to the boat.",
+          debriefP:
+            "SC-12 followed you off the quay and took the Harbormaster to the bottom with it. No copies, no beacons, no bodies. Saltline belongs to the port again.",
+          deadLabel: "Cells destroyed",
+          debriefK: "Stack Yard \xB7 Debrief",
+          debriefH: "The Harbormaster is gone",
+          loc: "Chapter 5 \xB7 The Carrier",
+          locSub: "Saltline Terminal \xB7 Stack Yard \xB7 08:05 \u2014 on foot through the west gate",
         },
       }[SALT_LEVEL];
     // The landward land test and sea level are read at run time, so set the
@@ -89626,7 +90203,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         </div>
         <div class="m-pick">
           <label id="l-tm">Mode</label><div class="seg" role="group" aria-labelledby="l-tm">${uT.map((W) => `<button data-m="${W[0]}" aria-pressed="false">${W[1]}</button>`).join("")}</div>
-          <label id="l-tl">Chapter</label><div class="seg" role="group" aria-labelledby="l-tl">${[[1, "Berth 4"], [2, "Berth 7"], [3, "Kittiwake"], [4, "Gantry"]].map((W) => `<button data-act="golevel" data-lv="${W[0]}" aria-pressed="${SALT_LEVEL === W[0]}">${W[1]}</button>`).join("")}</div>
+          <label id="l-tl">Chapter</label><div class="seg" role="group" aria-labelledby="l-tl">${[[1, "Berth 4"], [2, "Berth 7"], [3, "Kittiwake"], [4, "Gantry"], [5, "Carrier"]].map((W) => `<button data-act="golevel" data-lv="${W[0]}" aria-pressed="${SALT_LEVEL === W[0]}">${W[1]}</button>`).join("")}</div>
           <label id="l-td">Difficulty</label><div class="seg" role="group" aria-labelledby="l-td">${ab.map((W) => `<button data-d="${W[0]}" aria-pressed="false">${W[1]}</button>`).join("")}</div>
           <div class="m-pick-note" data-f="modenote"></div>
         </div>
@@ -89670,7 +90247,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         <div><dt>Machines destroyed</dt><dd data-f="kills">0</dd></div>
         <div><dt>Retries</dt><dd data-f="retries">0</dd></div>
       </dl>
-      <div class="m-actions col">${SALT_LEVEL === 1 ? '<button class="btn primary" data-act="golevel" data-lv="2">Next chapter \xB7 The Core</button><button class="btn" data-act="redeploy">Redeploy</button>' : SALT_LEVEL === 2 ? '<button class="btn primary" data-act="golevel" data-lv="3">Next chapter \xB7 The Kittiwake</button><button class="btn" data-act="redeploy">Redeploy</button>' : SALT_LEVEL === 3 ? '<button class="btn primary" data-act="golevel" data-lv="4">Next chapter \xB7 The Gantry</button><button class="btn" data-act="redeploy">Redeploy</button>' : '<button class="btn primary" data-act="redeploy">Redeploy</button><button class="btn" data-act="golevel" data-lv="1">Replay from chapter 1</button>'}</div>
+      <div class="m-actions col">${SALT_LEVEL === 1 ? '<button class="btn primary" data-act="golevel" data-lv="2">Next chapter \xB7 The Core</button><button class="btn" data-act="redeploy">Redeploy</button>' : SALT_LEVEL === 2 ? '<button class="btn primary" data-act="golevel" data-lv="3">Next chapter \xB7 The Kittiwake</button><button class="btn" data-act="redeploy">Redeploy</button>' : SALT_LEVEL === 3 ? '<button class="btn primary" data-act="golevel" data-lv="4">Next chapter \xB7 The Gantry</button><button class="btn" data-act="redeploy">Redeploy</button>' : SALT_LEVEL === 4 ? '<button class="btn primary" data-act="golevel" data-lv="5">Next chapter \xB7 The Carrier</button><button class="btn" data-act="redeploy">Redeploy</button>' : '<button class="btn primary" data-act="redeploy">Redeploy</button><button class="btn" data-act="golevel" data-lv="1">Replay from chapter 1</button>'}</div>
     </section>
 
     <div class="panel" role="dialog" aria-modal="true" aria-label="Settings and controls" tabindex="-1" hidden>
@@ -90286,7 +90863,20 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         ],
         all: "Backup is dark. Get down off that crane \u2014 boat is at the quay ladder. Run.",
         low: "You are hit hard. Get behind steel and breathe.",
-        done: "Breacher is aboard. Nothing left transmitting. It is over. Good work.",
+        done: "Breacher is aboard. Crane is dark. Stand by \u2014 something heavy just started up in the stack yard.",
+      } : SALT_LEVEL === 5 ? {
+        intro:
+          "Breacher, Control. The Harbormaster is driving straddle carrier SC-12, east end of the stack yard. It has three drive cells. Break all three.",
+        contact: "Gulls are up. The carrier will not be far behind them.",
+        wake: "It is moving. Stay out of the aisle it is running and watch the wheels.",
+        vent: "It has stopped to vent \u2014 the shutters are open. Hit the drive cells now.",
+        cut: [
+          "One cell gone. It is running hotter and faster \u2014 and it has called Gulls.",
+          "Two gone. One cell left. Wait for the vent and finish it.",
+        ],
+        all: "All three cells are dead and it is still coming. It has nothing left but mass. Boat is at the quay ladder \u2014 run.",
+        low: "You are hit hard. Get behind steel and breathe.",
+        done: "Breacher is aboard \u2014 and SC-12 just drove off the quay after you. It is over. Good work.",
       } : {
         intro:
           "Breacher, this is Control. The Harbormaster holds the berth. Cut its three uplinks \u2014 yard, shed, quay.",
@@ -90941,6 +91531,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       }
       function q(Y, he, V) {
         let ne = null;
+        // Some yards are no place for Hounds: send a Gull instead.
+        s && s.noHounds && Y === "hound" && ((Y = "gull"), he && he.y < 2.5 && (he.y = 6 + n.rng() * 3));
         try {
           ne = n.enemies.spawn(Y, he, V);
         } catch (ye) {
@@ -91054,7 +91646,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         let Y = null,
           he = xi.interactRange;
         for (let V of g.relays) {
-          if (V.cut || V.step !== g.step) continue;
+          if (V.cut || V.step !== g.step || V.o.locked) continue;
           let ne = V.o.pos.x - i.pos.x,
             ye = V.o.pos.z - i.pos.z,
             Te = Math.hypot(ne, ye);
@@ -91593,7 +92185,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       } else {
         if (
           (await fa("Stacking containers", 0.34),
-          await r("level", "level", () => (SALT_LEVEL === 4 ? Pg4(t) : SALT_LEVEL === 3 ? Pg3(t) : SALT_LEVEL === 2 ? Pg2(t) : Pg(t)), !0),
+          await r("level", "level", () => (SALT_LEVEL === 5 ? Pg5(t) : SALT_LEVEL === 4 ? Pg4(t) : SALT_LEVEL === 3 ? Pg3(t) : SALT_LEVEL === 2 ? Pg2(t) : Pg(t)), !0),
           await fa("Raising the cranes", 0.5),
           await r("backdrop", "backdrop", () => Iv(t)),
           await fa("Flooding the apron", 0.58),
