@@ -796,6 +796,32 @@
   .h-alt:empty {
     display: none;
   }
+  .h-slots {
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .h-slots i {
+    width: 15px;
+    font: 500 10px/14px var(--f-mono);
+    font-style: normal;
+    text-align: center;
+    color: var(--bone-dim);
+    border: 1px solid var(--bone-faint);
+  }
+  .h-slots i.on {
+    color: #0b0d10;
+    background: var(--bone);
+    border-color: var(--bone);
+  }
+  .h-slots i.out {
+    opacity: 0.4;
+    text-decoration: line-through;
+  }
+  .h-slots:empty {
+    display: none;
+  }
 
   /* world-space objective diamonds */
   .h-marks {
@@ -55626,7 +55652,7 @@ float metalnessFactor = metalness * slORM.b;
             step: 0,
             goal: "Cut both power feeds",
             prompt: "Cut feed A",
-            wave: { gull: 2, hound: 1 },
+            wave: { gull: 2, whippet: 2 },
             label: "Feed A \u2014 Tank farm",
             zone: "tanks",
             pos: Rt(-19.2, 0, 12.4),
@@ -55637,7 +55663,7 @@ float metalnessFactor = metalness * slORM.b;
             step: 0,
             goal: "Cut both power feeds",
             prompt: "Cut feed B",
-            wave: { gull: 2, hound: 2 },
+            wave: { gull: 1, skua: 3, hound: 1 },
             label: "Feed B \u2014 Pipe rack",
             zone: "yard",
             pos: Rt(4.6, 0, -15.2),
@@ -56019,7 +56045,7 @@ float metalnessFactor = metalness * slORM.b;
             step: 0,
             goal: "Cut both server containers",
             prompt: "Cut server A",
-            wave: { gull: 3, hound: 1 },
+            wave: { gull: 2, skua: 2, hound: 1 },
             label: "Server A — Midships",
             zone: "bays",
             pos: Rt(-10.9, 0, -11.3),
@@ -56030,7 +56056,7 @@ float metalnessFactor = metalness * slORM.b;
             step: 0,
             goal: "Cut both server containers",
             prompt: "Cut server B",
-            wave: { gull: 3, hound: 2 },
+            wave: { gull: 2, hound: 1, mastiff: 1 },
             label: "Server B — Aft deck",
             zone: "aft",
             pos: Rt(13.6, 0, -10.6),
@@ -56513,7 +56539,7 @@ float metalnessFactor = metalness * slORM.b;
             step: 0,
             goal: "Cut the crane\u2019s power feed",
             prompt: "Cut power feed",
-            wave: { gull: 2, hound: 1 },
+            wave: { gull: 1, skua: 2, hound: 1 },
             label: "Power feed \u2014 on the stack",
             zone: "stacks",
             pos: Rt(-1.6, H1, -3.9),
@@ -56525,7 +56551,7 @@ float metalnessFactor = metalness * slORM.b;
             step: 1,
             goal: "Lower the box into the gap",
             prompt: "Run the crane",
-            wave: { gull: 3, hound: 2 },
+            wave: { gull: 2, whippet: 3, hound: 1 },
             label: "Crane control \u2014 landside leg",
             zone: "crane",
             pos: Rt(7.4, 0, -6.2),
@@ -56537,7 +56563,7 @@ float metalnessFactor = metalness * slORM.b;
             step: 2,
             goal: "Cut the backup on the machinery deck",
             prompt: "Cut the backup",
-            wave: { gull: 4, hound: 2 },
+            wave: { gull: 2, skua: 3, hound: 1, mastiff: 1 },
             label: "Backup node \u2014 machinery deck",
             zone: "crane",
             pos: Rt(17.6, H3, 0),
@@ -56842,6 +56868,7 @@ float metalnessFactor = metalness * slORM.b;
         done = !1,
         V = (x, y, z) => new K(x, y, z);
       return (n._xt = {
+        lists,
         add(list) {
           lists.push(list);
         },
@@ -57042,7 +57069,9 @@ float metalnessFactor = metalness * slORM.b;
           locked: !0,
           goal: "Destroy the carrier\u2019s three drive cells",
           prompt: "",
-          wave: { gull: 2 + i, hound: 0 },
+          // Skuas after the first cell, a Pelican shelling the aisles after
+          // the second, a last swarm for the run to the boat.
+          wave: [{ gull: 2, skua: 2 }, { gull: 2, pelican: 1 }, { gull: 2, skua: 4 }][i],
           label: "Drive cell",
           zone: "rows",
           pos: cellPos[i],
@@ -71575,6 +71604,49 @@ void main() {
           duck: 0.5,
           shellPitch: 1.22,
         },
+        // The rest reuse the two recorded shots, pitched and layered.
+        shotgun: {
+          shot: "rifle_shot",
+          n: 5,
+          gain: 1.3,
+          pitch: 0.6,
+          layer: "pistol_shot",
+          layerPitch: 0.5,
+          layerGain: 1,
+          tailOut: "rifle_tail_out",
+          tailIn: "rifle_tail_in",
+          tail: 1.4,
+          duck: 0.6,
+          shellPitch: 0.72,
+        },
+        marksman: {
+          shot: "rifle_shot",
+          n: 5,
+          gain: 0.9,
+          pitch: 0.78,
+          layer: "pistol_shot",
+          layerPitch: 1.5,
+          layerGain: 0.35,
+          tailOut: "rifle_tail_out",
+          tailIn: "rifle_tail_in",
+          tail: 1.5,
+          duck: 0.5,
+          shellPitch: 0.85,
+        },
+        launcher: {
+          shot: "pistol_shot",
+          n: 4,
+          gain: 1.15,
+          pitch: 0.36,
+          layer: "weapon_holster",
+          layerPitch: 0.6,
+          layerGain: 0.9,
+          tailOut: "pistol_tail_out",
+          tailIn: "pistol_tail_in",
+          tail: 0.5,
+          duck: 0.4,
+          shellPitch: 0.6,
+        },
       },
       duck: { attack: 0.012, hold: 0.085, release: 0.1 },
       tailBoostAfter: 0.105,
@@ -72797,7 +72869,7 @@ void main() {
             lz: ie.pos ? ie.pos.z : 0,
             sp: 0,
             d: 1e9,
-            tune: 0.96 + s() * 0.1,
+            tune: (0.96 + s() * 0.1) * (ie.voice || 1),
           });
       }
       function xn(ie) {
@@ -72905,14 +72977,15 @@ void main() {
         } else ke("relay_cut", { gain: 0.8 });
       }
       let Kt = (ie) => (ie && typeof ie.x == "number" ? ie : null),
-        be = (ie) => (ie && ie.weapon === "pistol" ? "pistol" : "rifle");
+        be = (ie) => (ie && ji.weapon[ie.weapon] ? ie.weapon : "rifle");
       function Le(ie) {
         let ae = ji.weapon[ie],
           pe = e.currentTime;
         ((Y = ae),
           (X = pe),
-          (ze[ie] = (ze[ie] + 1 + (s() < 0.25 ? 1 : 0)) % ae.n),
-          je(ae.shot, { variant: ze[ie], gain: ae.gain, jitter: 0.012 }));
+          (ze[ie] = ((ze[ie] || 0) + 1 + (s() < 0.25 ? 1 : 0)) % ae.n),
+          je(ae.shot, { variant: ze[ie], gain: ae.gain, jitter: 0.012, pitch: ae.pitch || 1 }),
+          ae.layer && je(ae.layer, { gain: ae.layerGain, pitch: ae.layerPitch, jitter: 0.02 }));
         for (let Ce of Ge)
           if (Ce.ch.src === Ce.src)
             try {
@@ -72983,7 +73056,7 @@ void main() {
       (Fe("weapon:reload", (ie) => {
         let ae = be(ie),
           pe = ie.phase,
-          Ee = He[ae][pe];
+          Ee = (He[ae] || He.rifle)[pe];
         pe === "start"
           ? ke("gear_rustle", {
               variant: 0,
@@ -72996,7 +73069,7 @@ void main() {
                 gain: 0.6,
                 pitch: ae === "pistol" ? 1.12 : 1,
               })
-            : pe === "boltback" && ae === "rifle"
+            : pe === "boltback" && ae !== "pistol"
               ? ke(Ee, {
                   variant: ie.partial ? 1 : 0,
                   gain: ie.partial ? 0.6 : 1,
@@ -73156,6 +73229,7 @@ void main() {
           (ke(ae === "hound" ? "hound_fire" : "gull_fire", {
             pos: pe,
             gain: 1,
+            pitch: ie.kind === "pelican" ? 0.5 : ie.kind === "mastiff" ? 0.78 : 1,
             jitter: 0.04,
           }),
             (me = Math.min(1, Math.max(me, 0.6) + 0.05)));
@@ -73169,7 +73243,8 @@ void main() {
           ie.type !== "gull" &&
             ke("hound_step", {
               pos: Kt(ie.pos),
-              gain: ti(0.6 + (+ie.speed || 2) * 0.1, 0.6, 1),
+              gain: ti(0.6 + (+ie.speed || 2) * 0.1, 0.6, 1) * (ie.size < 1 ? 0.7 : 1),
+              pitch: ie.size ? Math.pow(ie.size, -0.9) : 1,
               jitter: 0.06,
             });
         }),
@@ -73678,8 +73753,14 @@ void main() {
         KeyQ: "swap",
         Digit1: "weapon1",
         Digit2: "weapon2",
+        Digit3: "weapon3",
+        Digit4: "weapon4",
+        Digit5: "weapon5",
         Numpad1: "weapon1",
         Numpad2: "weapon2",
+        Numpad3: "weapon3",
+        Numpad4: "weapon4",
+        Numpad5: "weapon5",
         Enter: "fire",
         NumpadEnter: "fire",
         ArrowLeft: "turnL",
@@ -73865,7 +73946,7 @@ void main() {
           if (!r) return;
           ne.preventDefault();
           let ye = performance.now();
-          ye - g < 280 || Math.abs(ne.deltaY) < 1 || ((g = ye), s.add("swap"));
+          ye - g < 280 || Math.abs(ne.deltaY) < 1 || ((g = ye), s.add(ne.deltaY > 0 ? "wnext" : "wprev"));
         },
         { passive: !1 },
       ),
@@ -73961,7 +74042,7 @@ void main() {
               fire: ye(".t-fire"),
               ads: ye(".t-ads"),
               reload: ye(".t-reload"),
-              swap: ye(".t-swap"),
+              wnext: ye(".t-swap"),
               jump: ye(".t-jump"),
               interact: ye(".t-interact"),
               pause: ye(".t-pause"),
@@ -74091,13 +74172,12 @@ void main() {
       let le = {
           jump: [0],
           crouch: [1, 4],
-          swap: [3, 12, 13],
+          wnext: [3, 13, 15],
+          wprev: [12, 14],
           melee: [5, 11],
           ads: [6],
           fire: [7],
           pause: [9],
-          weapon1: [14],
-          weapon2: [15],
         },
         xe = {
           0: "accept",
@@ -74514,7 +74594,7 @@ void main() {
           return;
         }
         let oe = A.enabled;
-        ((A.lookScale = u0(1, Nt.adsLook, A.ads)),
+        ((A.lookScale = u0(1, Nt.adsLook * (((n.weapon && n.weapon.adsFov) || Nt.fovAds) / Nt.fovAds), A.ads)),
           oe &&
             ((A.yaw -= G.look.dx * A.lookScale),
             (A.pitch = Hn(
@@ -74729,7 +74809,7 @@ void main() {
         ) {
           let se = u0(
             A.baseFov + (A.sprinting ? Nt.fovSprint : 0),
-            Nt.fovAds,
+            (n.weapon && n.weapon.adsFov) || Nt.fovAds,
             A.ads,
           );
           ((z =
@@ -74758,16 +74838,34 @@ void main() {
           reset() {
             e.shots = e.hits = e.kills = 0;
           },
+          // falloff [from, to, floor]: damage fades to floor between the two
+          // ranges. pierce: how many machines the round carries on through.
+          // tally false keeps a shotgun's extra pellets out of the accuracy.
           playerShot(
             i,
             s,
-            { damage: o = 28, range: r = 300, impulse: a = 1 } = {},
+            { damage: o = 28, range: r = 300, impulse: a = 1, falloff: fo = null, pierce: pc = 0, tally: ty = !0 } = {},
           ) {
-            e.shots++;
+            ty && e.shots++;
             let l = n.physics.raycast(i, s, r),
               c = n.enemies.raycast(i, s, l ? l.dist : r);
             if (c) {
-              e.hits++;
+              ty && e.hits++;
+              fo && (o *= 1 - (1 - fo[2]) * Math.min(1, Math.max(0, (c.dist - fo[0]) / (fo[1] - fo[0]))));
+              if (pc > 0) {
+                // Carry on from just behind this machine, at reduced damage.
+                let en0 = c.enemy,
+                  from = c.point.clone(),
+                  left = (l ? l.dist : r) - c.dist;
+                for (let step = 0; step < 6 && left > 0.4; step++) {
+                  (from.addScaledVector(s, 0.4), (left -= 0.4));
+                  let nx = n.enemies.raycast(from, s, left);
+                  if (!nx) break;
+                  if (nx.enemy === en0) continue;
+                  this.playerShot(nx.point.clone().addScaledVector(s, -0.02), s, { damage: o * 0.7, range: left - nx.dist + 0.02, pierce: pc - 1, tally: !1 });
+                  break;
+                }
+              }
               let u = c.part === "weak" ? 2.2 : 1,
                 f = c.enemy.damage(o * u, c.point, s, c.part) === !0,
                 h = {
@@ -74840,19 +74938,32 @@ void main() {
               !1
             );
           },
+          // Returns how many machines the blast hurt.
           explode(i, s = 5, o = 80, r = "player") {
-            for (let l of n.enemies.list) {
+            let hurt = 0;
+            // Copy the list: a machine that dies here can leave it mid-loop.
+            for (let l of n.enemies.list.slice()) {
               if (!l.alive) continue;
               let c = l.pos.distanceTo(i);
               c < s &&
                 n.physics.lineOfSight(i, a5.copy(l.pos).setY(l.pos.y + 0.5)) &&
+                (hurt++,
                 l.damage(
                   o * (1 - c / s),
                   l.pos,
                   v1.copy(l.pos).sub(i).normalize(),
-                  "body",
-                );
+                  "blast",
+                ));
             }
+            // The breacher's own blasts also reach the fixed targets (Herons,
+            // the Carrier's drive cells).
+            if (r !== "enemy" && n._xt && n._xt.lists)
+              for (let list of n._xt.lists)
+                for (let l of list) {
+                  if (!l.active || !l.alive) continue;
+                  let c = l.pos.distanceTo(i);
+                  c < s && n.physics.lineOfSight(i, l.pos) && (hurt++, l.damage(o * (1 - c / s), l.pos, v1.copy(l.pos).sub(i).normalize(), "blast"));
+                }
             let a = n.player;
             if (a && a.alive) {
               let l = a5
@@ -74864,6 +74975,7 @@ void main() {
                 a.damage(o * 0.5 * (1 - l / s), i);
             }
             r === "explosive" && (e.blasts = (e.blasts || 0) + 1);
+            return hurt;
           },
         }
       );
@@ -84595,6 +84707,80 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         -(0.9 * Math.sin(n) + 0.318 * Math.sin(2 * n) + 0.1 * Math.sin(3 * n)) *
         0.9416,
       NS = { walk: 1.55, sprint: 2.1, crouch: 1.05 };
+    // The rest of the locker. Each one is the PAC-9 chassis (same hands, same
+    // reload) with its own furniture and barrel group; "def" overrides the
+    // rifle's numbers. pellets: rounds per shot. falloff: [from, to, floor]
+    // damage fade over range. pierce: machines a round carries on through.
+    // adsFov: view angle while aiming. launch: fires an arcing shell instead of
+    // a round ("arm" is the flight time before it will burst).
+    var ARSENAL = [
+      {
+        id: "shotgun",
+        name: "PAC-12 Stevedore",
+        tint: { poly: [0.115, 0.046, 0.02], tan: [0.03, 0.03, 0.032] },
+        muzzleZ: -0.582,
+        kick: 2.4,
+        def: {
+          magSize: 6,
+          reserve: 36,
+          rpm: 82,
+          damage: 15,
+          pellets: 9,
+          range: 60,
+          falloff: [9, 34, 0.25],
+          auto: !1,
+          adsTime: 0.2,
+          inspect: !1,
+          flashLight: 85,
+          flashScale: 1.7,
+          spread: { hip: 0.05, ads: 0.034, moveHip: 0.008, moveAds: 0.004, bloomHip: 0.012, bloomAds: 0.008, air: 0.02, crouch: 0.006, shot: 0.6, decay: 1.6 },
+        },
+      },
+      {
+        id: "marksman",
+        name: "PAC-7 Pilot",
+        tint: { poly: [0.05, 0.062, 0.078], tan: [0.05, 0.062, 0.078] },
+        muzzleZ: -0.79,
+        kick: 2,
+        def: {
+          magSize: 6,
+          reserve: 30,
+          rpm: 92,
+          damage: 125,
+          range: 420,
+          pierce: 1,
+          auto: !1,
+          adsTime: 0.3,
+          adsFov: 23,
+          inspect: !1,
+          flashLight: 30,
+          flashScale: 0.55,
+          smoke: !1,
+          spread: { hip: 0.03, ads: 0.0003, moveHip: 0.03, moveAds: 0.006, bloomHip: 0.02, bloomAds: 0.004, air: 0.05, crouch: 0.006, shot: 0.8, decay: 1.4 },
+        },
+      },
+      {
+        id: "launcher",
+        name: "PAC-25 Dredger",
+        tint: { poly: [0.07, 0.075, 0.035], tan: [0.46, 0.3, 0.025] },
+        muzzleZ: -0.615,
+        kick: 3,
+        def: {
+          magSize: 4,
+          reserve: 12,
+          rpm: 52,
+          damage: 150,
+          range: 120,
+          auto: !1,
+          adsTime: 0.24,
+          inspect: !1,
+          flashLight: 60,
+          flashScale: 1.5,
+          launch: { speed: 44, gravity: 8, loft: 1, radius: 5.5, direct: 60, arm: 0.14, size: 1.5 },
+          spread: { hip: 0.012, ads: 0.004, moveHip: 0.012, moveAds: 0.006, bloomHip: 0.01, bloomAds: 0.004, air: 0.03, crouch: 0.003, shot: 0.5, decay: 1.5 },
+        },
+      },
+    ];
     async function I5(n) {
       let e = { brass: 4, glove_fabric: 3 },
         t = (B) =>
@@ -84766,7 +84952,95 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         m = wS(d),
         x = zS(d),
         v = { rifle: m, pistol: x },
-        y = [m, x];
+        y = [m, x],
+        T3 = n.THREE || ut,
+        // The weapon materials read a vertex colour and a wear attribute, so
+        // plain geometry needs both before it can wear them.
+        dress = (B) => {
+          let X = B.attributes.position.count;
+          return (
+            B.setAttribute("color", new T3.BufferAttribute(new Float32Array(X * 3).fill(1), 3)),
+            B.setAttribute("aSurf", new T3.BufferAttribute(new Float32Array(X * 4), 4)),
+            B
+          );
+        },
+        // A tube along the bore from z0 to z1.
+        tube = (B, X, re, Y, he = 0, V = !1) => {
+          let ne = dress(new T3.CylinderGeometry(B, B, Math.abs(re - X), 20, 1, V));
+          ne.rotateX(Math.PI / 2);
+          let ye = i(ne, Y);
+          return (ye.position.set(0, he, (X + re) / 2), ye);
+        },
+        block = (B, X, re, Y, he, V, ne) => {
+          let ye = i(dress(new T3.BoxGeometry(B, X, re)), ne);
+          return (ye.position.set(Y, he, V), ye);
+        };
+      function arsenalRig(B) {
+        let X = Object.assign({}, o);
+        for (let Te in B.tint) X[Te] = s("pac_" + B.id + "_" + Te, B.tint[Te], 0.62, 0, 2);
+        let re = wS(Object.assign({}, d, { mats: X })),
+          Y = re.root,
+          he = re.def;
+        ((Y.name = "viewmodel-" + B.id),
+          (re.id = B.id),
+          (re.name = B.name),
+          (re.def = Object.assign({}, he, B.def, { spread: Object.assign({}, he.spread, B.def.spread) })),
+          (re.slot = { id: B.id, name: B.name, ammo: B.def.magSize, magSize: B.def.magSize, reserve: B.def.reserve }),
+          (re.muzzle = [0, 0, B.muzzleZ]),
+          (re.flash.position.z = B.muzzleZ));
+        if (B.id === "shotgun") {
+          // Fat smoothbore and a side saddle of spare shells.
+          let Te = new L0({ color: new Qe(0.24, 0.026, 0.018), roughness: 0.62, metalness: 0 });
+          Y.add(
+            tube(0.0138, -0.36, -0.578, X.steel),
+            tube(0.0172, -0.548, -0.582, X.ano),
+            tube(0.0172, -0.385, -0.405, X.ano),
+            block(0.005, 0.03, 0.092, -0.0195, 0.002, 0.022, X.ano),
+          );
+          for (let Re = 0; Re < 4; Re++) {
+            let Ue = i(new T3.CylinderGeometry(0.0078, 0.0078, 0.034, 12), Te),
+              Ve = i(dress(new T3.CylinderGeometry(0.0082, 0.0082, 0.01, 12)), o.brass);
+            (Ue.position.set(-0.028, 0.007, -0.011 + Re * 0.022),
+              Ve.position.set(-0.028, -0.014, -0.011 + Re * 0.022),
+              Y.add(Ue, Ve));
+          }
+        } else if (B.id === "marksman") {
+          // Long barrel, a can on the end, and a magnifier ahead of the optic.
+          // The magnifier is an open tube: from behind the lens its inside
+          // faces are culled, so the aimed view stays clear.
+          Y.add(
+            tube(0.0088, -0.5, -0.64, X.steel),
+            tube(0.0172, -0.6, -0.79, X.ano),
+            tube(0.0185, -0.612, -0.624, X.steel),
+            tube(0.0158, -0.05, -0.2, X.ano, wn.sightY, !0),
+            tube(0.0195, -0.172, -0.214, X.ano, wn.sightY, !0),
+            block(0.012, 0.014, 0.016, 0, wn.railTop + 0.006, -0.075, X.steel),
+            block(0.012, 0.014, 0.016, 0, wn.railTop + 0.006, -0.15, X.steel),
+          );
+        } else if (B.id === "launcher") {
+          // A wide launch tube with a hazard band.
+          let Te = new L0({ color: new Qe(0.55, 0.36, 0.03), roughness: 0.55, metalness: 0 });
+          Y.add(
+            tube(0.026, -0.335, -0.605, X.poly),
+            tube(0.0292, -0.57, -0.612, X.ano),
+            tube(0.0286, -0.335, -0.362, X.ano),
+            i(new T3.CylinderGeometry(0.0266, 0.0266, 0.022, 20, 1, !0).rotateX(Math.PI / 2), Te),
+          );
+          Y.children[Y.children.length - 1].position.set(0, 0, -0.48);
+        }
+        // A heavier shove than the rifle's.
+        let V = re.recoil,
+          ne = B.kick || 1,
+          ye = bh.rifle.recoil;
+        re.recoil = (Te, Re, Ue) => {
+          (V(1, Re * ne, Ue),
+            (a.kZ.v += ye.back * (ne - 1) * 0.6),
+            (a.kP.v += ye.rise * (ne - 1) * 0.6),
+            (a.kU.v += ye.up * (ne - 1) * 0.4));
+        };
+        return ((v[B.id] = re), y.push(re), re);
+      }
+      for (let B of ARSENAL) arsenalRig(B);
       for (let B of y)
         (B.root.traverse((X) => {
           X.layers.set(Ro);
@@ -84786,7 +85060,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           ads: 0,
           spread: 0.0125,
           debug: l,
-          slots: [m.slot, x.slot],
+          slots: y.map((B) => B.slot),
           rigs: v,
           pending: null,
           arms: p,
@@ -84794,8 +85068,22 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           update: O,
           reset: T,
           switchTo: U,
+          // Q: back to the weapon held before this one.
           swap() {
-            return U((u.active ? u.to : b) === m ? "pistol" : "rifle");
+            let B = last !== held() ? last : next(1);
+            return B ? U(B.id) : !1;
+          },
+          // Wheel, pad and touch: step through the locker, skipping dry guns.
+          cycle(B) {
+            let X = next(B < 0 ? -1 : 1);
+            return X ? U(X.id) : !1;
+          },
+          // Top every finite reserve up by a share of its starting load.
+          resupply(B = 1) {
+            for (let X of y)
+              X !== m &&
+                Number.isFinite(X.slot.reserve) &&
+                (X.slot.reserve = Math.min(X.def.reserve, X.slot.reserve + Math.max(1, Math.round(X.def.reserve * B))));
           },
           equip(B) {
             v[B] &&
@@ -84856,6 +85144,18 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           view: 1,
           setView: M,
         };
+      let last = x;
+      function held() {
+        return u.active ? u.to : b;
+      }
+      function next(B) {
+        let X = y.indexOf(held());
+        for (let re = 1; re < y.length; re++) {
+          let Y = y[(X + B * re + y.length * 2) % y.length];
+          if (Y.slot.ammo > 0 || Y.slot.reserve > 0) return Y;
+        }
+        return null;
+      }
       function M(B) {
         ((B = Math.max(1, Math.min(3, Math.round(+B) || 1))), (E.view = B));
         for (let X of y) X.setView && X.setView(B - 1);
@@ -84882,6 +85182,9 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         rpm: { enumerable: !0, get: () => b.def.rpm },
         current: { enumerable: !0, get: () => b.id },
         root: { enumerable: !0, get: () => b.root },
+        adsFov: { enumerable: !0, get: () => b.def.adsFov || 0 },
+        lastSlot: { enumerable: !0, get: () => (last !== held() ? last : next(1) || last).slot },
+        nextSlot: { enumerable: !0, get: () => (next(1) || held()).slot },
       });
       function _(B) {
         (b.flash && (b.flash.visible = !1),
@@ -84962,7 +85265,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           Xn(a.stance2),
           Xn(a.gOff),
           Xn(a.stride, NS.walk),
-          _(m));
+          _(m),
+          (last = x));
       }
       function w(B, X) {
         let re = b.root;
@@ -85010,6 +85314,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       }
       function L(B, X, re) {
         (I(),
+          (last = B),
           (a.autoReload = -1),
           (a.inspect = -1),
           (a.fireQ = 0),
@@ -85078,24 +85383,72 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           (a.lastShot = a.t),
           (a.heat = Math.min(1.3, a.heat + 0.05)));
         let he = E.spread,
-          V = r() * Math.PI * 2,
-          ne = Math.tan(he) * Math.sqrt(r());
-        (C.set(Math.cos(V) * ne, Math.sin(V) * ne, -1)
-          .normalize()
-          .applyQuaternion(X.quaternion),
-          Z.copy(B.eye || X.position));
-        let ye = null;
-        try {
-          ye = n.combat.playerShot(Z, C, { damage: Y.damage, range: Y.range });
-        } catch {}
-        (ye && ye.point
-          ? F.copy(ye.point)
-          : F.copy(Z).addScaledVector(C, Y.range),
-          S(A));
-        let Te = n.fx;
+          Te = n.fx,
+          ye = null,
+          pellets = Y.launch ? 1 : Y.pellets || 1,
+          landed = !1;
+        (Z.copy(B.eye || X.position), S(A));
+        for (let k = 0; k < pellets; k++) {
+          let V = r() * Math.PI * 2,
+            ne = Math.tan(he) * Math.sqrt(r());
+          C.set(Math.cos(V) * ne, Math.sin(V) * ne, -1)
+            .normalize()
+            .applyQuaternion(X.quaternion);
+          if (Y.launch) {
+            // Leave from just ahead of the eye, so cover beside the muzzle
+            // does not swallow the shell.
+            let Re = Y.launch,
+              Ue = null;
+            try {
+              Ue = n.physics.raycast(Z, C, 0.9);
+            } catch {}
+            (H.copy(Z).addScaledVector(C, Ue ? Math.max(0.05, Ue.dist - 0.12) : 0.8),
+              (H.y -= 0.07),
+              N.copy(C).multiplyScalar(Re.speed),
+              (N.y += Re.loft || 0),
+              n.combat.stats.shots++);
+            try {
+              n.enemies.fireShell(H, N, {
+                owner: "player",
+                radius: Re.radius,
+                damage: Y.damage,
+                direct: Re.direct,
+                size: Re.size,
+                gravity: Re.gravity,
+                arm: Re.arm,
+                life: 5,
+                scale: 0.8,
+                onBurst(Ve) {
+                  Ve > 0 &&
+                    (n.combat.stats.hits++,
+                    n.events.emit("player:hitEnemy", { enemy: null, part: "blast", killed: !1, weak: !1 }));
+                },
+              });
+            } catch (Ve) {
+              console.error("[weapon] launch threw", Ve);
+            }
+            break;
+          }
+          let Re = null;
+          try {
+            Re = n.combat.playerShot(Z, C, {
+              damage: Y.damage,
+              range: Y.range,
+              falloff: Y.falloff || null,
+              pierce: Y.pierce || 0,
+              tally: k === 0,
+            });
+          } catch {}
+          (k === 0 && (ye = Re),
+            Re && Re.enemy && (landed = !0),
+            Re && Re.point ? F.copy(Re.point) : F.copy(Z).addScaledVector(C, Y.range),
+            Te && Te.tracer && Te.tracer(A, F));
+        }
+        // A spread shot is a hit when any pellet lands, not only the first.
+        pellets > 1 && landed && !(ye && ye.enemy) && n.combat.stats.hits++;
         (Te &&
-          (Te.tracer && Te.tracer(A, F),
-          Te.shell &&
+          (Te.shell &&
+            !Y.launch &&
             (w(re.eject, H),
             N.set(
               2 + r() * 1.2,
@@ -85315,9 +85668,11 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           re.pressed &&
             (re.pressed("swap")
               ? E.swap()
-              : re.pressed("weapon1")
-                ? U("rifle")
-                : re.pressed("weapon2") && U("pistol")),
+              : re.pressed("wnext")
+                ? E.cycle(1)
+                : re.pressed("wprev")
+                  ? E.cycle(-1)
+                  : y.some((Y, he) => re.pressed("weapon" + (he + 1)) && (U(Y.id), !0))),
           u.active && k(B));
         let Y = b,
           he = Y.def,
@@ -85846,7 +86201,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             X && (X.wgun || X.wpose))
           ) {
             l.pause = !1;
-            let re = X.wgun === "pistol" ? "pistol" : "rifle",
+            let re = v[X.wgun] ? X.wgun : "rifle",
               Y = X.wpose || "hip",
               he = Y === "empty";
             ((a.reload = null),
@@ -85912,8 +86267,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         o = window.__setShot,
         r = null;
       function a(c, u = {}) {
-        let f = u.wgun === "pistol" ? "pistol" : "rifle",
-          h = s[f][c];
+        let f = e.rigs[u.wgun] ? u.wgun : "rifle",
+          h = (s[f] || s.rifle)[c];
         ((r = c), u.wview && e.setView(u.wview));
         let p = n.input,
           d = n.player;
@@ -87229,14 +87584,21 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         );
       },
       Ou = (n, e, t) => (n < e ? e : n > t ? t : n);
-    function XS(n, e, t, i) {
-      let s = n.G,
+    // The Gull chassis. "kind" (see KINDS) swaps in another kind's tuning, scale
+    // and paint: a Skua dives at the breacher and detonates, a Pelican lobs
+    // shells instead of firing bolts.
+    function XS(n, e, t, i, kind) {
+      let gn = kind ? kind.tune : Jy,
+        SC = (kind && kind.scale) || 1,
+        DIVE = !!(kind && kind.dive),
+        LOB = (kind && kind.lob) || null,
+        s = n.G,
         o = n.rng,
         r = t.lensBase.clone(),
         a = z5(
           e,
           {
-            shell: t.shell,
+            shell: (kind && kind.shellMat) || t.shell,
             metal: t.metal,
             glow: t.glow,
             lens: r,
@@ -87250,8 +87612,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           },
         ),
         l = a.bones;
-      ((a.group.rotation.order = "YXZ"), (a.group.visible = !1));
-      let c = s.mats.label("G-" + String(i + 11), {
+      ((a.group.rotation.order = "YXZ"), (a.group.visible = !1), a.group.scale.setScalar(SC));
+      let c = s.mats.label(((kind && kind.tag) || "G") + "-" + String(i + 11), {
           color: "black",
           font: "stencil",
           distress: 0.35,
@@ -87268,6 +87630,9 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       let d = {
         id: 0,
         type: "gull",
+        kind: kind ? kind.id : "gull",
+        voice: (kind && kind.voice) || 1,
+        bound: 1.7 * SC * SC,
         pos: a.group.position,
         alive: !1,
         hp: gn.hp,
@@ -87370,6 +87735,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             (d.spin = 0),
             (d.lostRotor = -1),
             (d.flare = 0),
+            (d.diving = !1),
             (d.thr = 1));
           for (let g = 0; g < 4; g++) l["rotor" + g].scale.setScalar(1);
           if (
@@ -87434,7 +87800,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           (d.lostRotor = Math.floor(o() * 4)),
           l["rotor" + d.lostRotor].scale.setScalar(1e-4),
           rr
-            .set(N5.rotors[d.lostRotor][0], 0.05, N5.rotors[d.lostRotor][2])
+            .set(N5.rotors[d.lostRotor][0] * SC, 0.05, N5.rotors[d.lostRotor][2] * SC)
             .applyAxisAngle(W1, d.yaw)
             .add(d.pos),
           s.fx.sparks(rr, W1, 14),
@@ -87452,6 +87818,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             enemy: d,
             pos: d.pos,
             type: "gull",
+            kind: d.kind,
           }));
       }
       function x(y) {
@@ -87465,7 +87832,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           (d.pitch += 0.9 * y));
         let b = d.vel.length(),
           g = b * y,
-          E = d.dieT > 5 || d.pos.y < -3;
+          E = d.dieT > (DIVE ? 0.09 : 5) || d.pos.y < -3;
         if (!E && b > 0.01) {
           Qs.copy(d.vel).multiplyScalar(1 / b);
           let M = s.physics.raycast(d.pos, Qs, g + 0.3);
@@ -87497,7 +87864,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             d.loop.setPitch(Math.max(0.4, 1.25 - d.dieT * 0.4)),
             d.loop.setGain(0.5)),
           E &&
-            (s.fx.explosion(d.pos, 1.2),
+            (s.fx.explosion(d.pos, (kind && kind.boom) || 1.2),
             s.combat &&
               s.combat.explode &&
               s.combat.explode(
@@ -87512,7 +87879,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         let b = s.player,
           g = n.t;
         (d.fwd.set(Math.sin(d.yaw), 0, Math.cos(d.yaw)),
-          d.sensor.set(0, -0.17, 0.27).applyAxisAngle(W1, d.yaw).add(d.pos),
+          d.sensor.set(0, -0.17 * SC, 0.27 * SC).applyAxisAngle(W1, d.yaw).add(d.pos),
           n.think(d, y, 0.4));
         let E = d.mode === "engage",
           M = d.hp < gn.hp * 0.5,
@@ -87520,7 +87887,34 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           T,
           w,
           S;
-        if (E && b) {
+        d.diving = DIVE && E && !!b && b.alive !== !1 && d.noSeeT <= 1.5;
+        if (d.diving) {
+          // Skua: no orbit. Fly straight through the breacher's chest (aiming
+          // past them so it does not brake) and go off on contact.
+          _ = gn.maxSpeed;
+          let q = b.pos.x - d.pos.x,
+            ue = b.pos.z - d.pos.z,
+            de = Math.hypot(q, ue) || 1;
+          ((T = b.pos.x + (q / de) * 6 + b.vel.x * 0.15),
+            (S = b.pos.z + (ue / de) * 6 + b.vel.z * 0.15),
+            (w = b.pos.y + (de > 9 ? 2.6 : 1.15)),
+            d.telT === void 0 && (d.telT = 0),
+            (d.telT -= y),
+            d.telT <= 0 &&
+              ((d.telT = Math.max(0.28, Math.min(1.1, de / 14))),
+              (d.flare = 1),
+              s.events.emit("enemy:telegraph", {
+                enemy: d,
+                type: "gull",
+                time: d.telT,
+                pos: d.pos,
+              })));
+          let $ = b.pos.y + 1.15 - d.pos.y;
+          if (q * q + ue * ue + $ * $ < 2.4) {
+            (m(null), (d.dieT = 1));
+            return;
+          }
+        } else if (E && b) {
           _ = gn.maxSpeed;
           let q = d.atk !== "idle";
           ((d.flipT -= y),
@@ -87556,7 +87950,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               (S = d.home.z + Math.sin(d.orbitA) * d.patrolR),
               (w = d.hoverFixed ? d.alt : d.home.y));
         (w > d.ceil && (w = d.ceil),
-          !d.hoverFixed && w < 2.2 && (w = 2.2),
+          !d.hoverFixed && !d.diving && w < 2.2 && (w = 2.2),
           Bo.set(
             (T - d.pos.x) * 2.2 - d.vel.x * 2.4,
             (w - d.pos.y) * 5 - d.vel.y * 3.6,
@@ -87686,11 +88080,12 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         if (
           (r.color.setRGB(d.lensC[0] * O, d.lensC[1] * O, d.lensC[2] * O),
           (d.flare = Math.max(0, d.flare - y * 1.5)),
-          d.muzzle.set(0, -0.12, 0.17).applyAxisAngle(W1, d.yaw).add(d.pos),
+          d.muzzle.set(0, -0.12 * SC, 0.17 * SC).applyAxisAngle(W1, d.yaw).add(d.pos),
           (d.cool -= y),
           d.atk === "idle")
         )
           E &&
+            !DIVE &&
             d.los &&
             d.cool <= 0 &&
             b &&
@@ -87720,7 +88115,31 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           d.atk === "burst" &&
           ((d.atkT -= y), (d.flare = 1), d.atkT <= 0)
         ) {
-          if (((d.atkT = gn.burstGap), d.shots--, b)) {
+          if (((d.atkT = gn.burstGap), d.shots--, b && LOB)) {
+            // Pelican: lob a shell at where the breacher is heading.
+            let q = Math.hypot(b.pos.x - d.muzzle.x, b.pos.z - d.muzzle.z),
+              ue = Ou(q / LOB.speed, LOB.time[0], LOB.time[1]),
+              de = d.lead * 0.7,
+              $ = (o() - 0.5) * 2 * LOB.scatter,
+              se = (o() - 0.5) * 2 * LOB.scatter;
+            (Wh.set(b.pos.x + b.vel.x * ue * de + $, b.pos.y, b.pos.z + b.vel.z * ue * de + se),
+              n.lob(d.muzzle, Wh, ue, {
+                owner: "enemy",
+                radius: LOB.radius,
+                damage: gn.boltDamage * LOB.damage,
+                size: LOB.size,
+              }),
+              Qs.copy(Wh).sub(d.muzzle).normalize(),
+              s.fx.muzzleFlash(d.muzzle, GS, { scale: 0.8 }),
+              s.events.emit("enemy:fire", {
+                enemy: d,
+                pos: d.muzzle,
+                dir: Qs,
+                type: "hound",
+                kind: d.kind,
+              }),
+              (d.vel.y += 0.5));
+          } else if (b) {
             let q = d.muzzle.distanceTo(b.pos),
               ue = q / gn.boltSpeed;
             (Wh.set(
@@ -87821,17 +88240,24 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
     function ll(n, e, t, i, s) {
       return ((n.v += ((e - n.x) * t - n.v * i) * s), (n.x += n.v * s), n.x);
     }
-    function jS(n, e, t, i) {
-      let s = n.G,
+    // The Hound chassis. "kind" (see KINDS) swaps in another kind's tuning, scale
+    // and paint: a Whippet is small, fast and has no gun, only the lunge; a
+    // Mastiff is big, slow and armoured everywhere but the head lens.
+    function jS(n, e, t, i, kind) {
+      let c0 = kind ? kind.tune : tb,
+        SC = (kind && kind.scale) || 1,
+        MELEE = !!(kind && kind.melee),
+        ARM = (kind && kind.armor) || 1,
+        s = n.G,
         o = n.rng,
         r = t.lensBase.clone(),
         a = z5(
           e,
-          { shell: t.shell, metal: t.metal, glow: t.glow, lens: r },
+          { shell: (kind && kind.shellMat) || t.shell, metal: t.metal, glow: t.glow, lens: r },
           { radius: 1.5, center: [0, 0.6, 0] },
         ),
         l = a.bones;
-      a.group.visible = !1;
+      ((a.group.visible = !1), a.group.scale.setScalar(SC));
       let c = [],
         u = [],
         f = [];
@@ -87839,7 +88265,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         (c.push(l["abd" + Yn.legs[k]]),
           u.push(l["thigh" + Yn.legs[k]]),
           f.push(l["shin" + Yn.legs[k]]));
-      let h = s.mats.label("H-" + String(i + 3).padStart(2, "0"), {
+      let h = s.mats.label(((kind && kind.tag) || "H") + "-" + String(i + 3).padStart(2, "0"), {
           color: "black",
           font: "stencil",
           distress: 0.3,
@@ -87862,6 +88288,10 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         g = {
           id: 0,
           type: "hound",
+          kind: kind ? kind.id : "hound",
+          voice: (kind && kind.voice) || 1,
+          bound: 1.7 * SC * SC,
+          sc: SC,
           pos: a.group.position,
           alive: !1,
           hp: c0.hp,
@@ -87937,12 +88367,16 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           maxSpeed: c0.patrolSpeed,
           damage(k, C, A, F) {
             if (!g.alive) return !1;
+            // Armour plate: only the head lens and blasts get full effect.
+            let plated = ARM < 1 && F !== "weak" && F !== "blast";
+            plated && ((k *= ARM), C && A && s.fx.sparks(C, Gh.copy(A).negate(), 5));
             if (
               ((g.hp -= k),
               s.events.emit("enemy:hit", {
                 enemy: g,
                 point: C,
                 part: F || "body",
+                plated,
               }),
               A)
             ) {
@@ -88034,18 +88468,18 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           },
           _raycast(k, C, A, F) {
             let H = !1;
-            KS(k, C, g.headPos, 0.155, A, F) &&
+            KS(k, C, g.headPos, 0.155 * Math.max(1, SC), A, F) &&
               ((F.part = "weak"), (F.enemy = g), (H = !0));
             let N = Math.cos(g.yaw),
               Z = Math.sin(g.yaw),
-              Q = g.pos.y + Yn.stand + g.sY.x - g.crouch;
+              Q = g.pos.y + (Yn.stand + g.sY.x - g.crouch) * SC;
             return (
-              _s.set(g.pos.x - Z * 0.45, Q + 0.03, g.pos.z - N * 0.45),
-              Gh.set(g.pos.x + Z * 0.47, Q + 0.03, g.pos.z + N * 0.47),
-              ZS(k, C, _s, Gh, 0.27, A, F) &&
+              _s.set(g.pos.x - Z * 0.45 * SC, Q + 0.03, g.pos.z - N * 0.45 * SC),
+              Gh.set(g.pos.x + Z * 0.47 * SC, Q + 0.03, g.pos.z + N * 0.47 * SC),
+              ZS(k, C, _s, Gh, 0.27 * SC, A, F) &&
                 ((F.part = "body"), (F.enemy = g), (H = !0)),
               (_s.y = Gh.y = g.pos.y + (Q - g.pos.y) * 0.45),
-              ZS(k, C, _s, Gh, 0.25, A, F) &&
+              ZS(k, C, _s, Gh, 0.25 * SC, A, F) &&
                 ((F.part = "body"), (F.enemy = g), (H = !0)),
               H
             );
@@ -88055,8 +88489,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           },
         };
       function E(k, C, A, F, H) {
-        let N = Yn.side[C] * Yn.footX,
-          Z = Yn.footZ[C],
+        let N = Yn.side[C] * Yn.footX * SC,
+          Z = Yn.footZ[C] * SC,
           Q = Math.cos(H),
           W = Math.sin(H);
         return (k.set(A + N * Q + Z * W, 0, F - N * W + Z * Q), k);
@@ -88111,6 +88545,11 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       function w() {
         let k = s.player;
         if (!k) return;
+        if (MELEE) {
+          // No gun, so no firing position: just run the breacher down.
+          (g.firePlayer.copy(k.pos), (g.es = "move"), (g.esT = 0), (g.moveT = 0), (g.bursts = 0), (g.hasGoal = !1));
+          return;
+        }
         let C = 1 / 0,
           A = k.eye || k.pos,
           F = (Z, Q) => {
@@ -88222,6 +88661,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           switch (
             ((g.es === "move" || g.es === "aim" || g.es === "cool") &&
               Q < c0.lungeRange &&
+              Math.abs(C.pos.y - g.pos.y) < 2.2 &&
               g.lungeCd <= 0 &&
               C.alive &&
               ((g.es = "wind"),
@@ -88237,6 +88677,16 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             g.es)
           ) {
             case "move": {
+              if (MELEE) {
+                // Between lunges, hold just outside arm's reach.
+                if (Q < 1.9 && Math.abs(C.pos.y - g.pos.y) < 2.2) {
+                  ((g.hasGoal = !1), (g.wantYaw = D));
+                  break;
+                }
+                ((!g.hasGoal || C.pos.distanceToSquared(g.goal) > 2.25) && M(C.pos, !0),
+                  T(k, c0.runSpeed) && (g.hasGoal = !1));
+                break;
+              }
               g.moveT += k;
               let B = T(k, c0.runSpeed),
                 X = Q > c0.rangeMin - 1 && Q < c0.rangeMax + 2;
@@ -88310,7 +88760,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
                 (g.wantYaw = D),
                 (g.maxSpeed = c0.lungeSpeed),
                 (g.speed = c0.lungeSpeed),
-                Q < 1.35 &&
+                Q < 1.35 * Math.max(1, SC) &&
+                  Math.abs(C.pos.y - g.pos.y) < 2.2 &&
                   C.alive &&
                   (C.damage(c0.lungeDamage, g.pos),
                   s.events.emit("enemy:melee", { enemy: g, pos: g.pos }),
@@ -88345,9 +88796,10 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           if (D === g || D.type !== "hound" || !D.active) continue;
           let B = g.pos.x - D.pos.x,
             X = g.pos.z - D.pos.z,
-            re = Math.hypot(B, X);
-          if (re < 1.7 && re > 0.001) {
-            let Y = ((1.7 - re) * 2.2) / re;
+            re = Math.hypot(B, X),
+            gap = 0.85 * (SC + (D.sc || 1));
+          if (re < gap && re > 0.001) {
+            let Y = ((gap - re) * 2.2) / re;
             ((g.push.x += B * Y * k * 6), (g.push.z += X * Y * k * 6));
           }
         }
@@ -88400,7 +88852,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           ue = 0,
           de = 0,
           $ = 0.05,
-          se = g.pos.y + Yn.stand + g.sY.x - g.crouch;
+          se = g.pos.y + (Yn.stand + g.sY.x - g.crouch) * SC;
         if (F) {
           let D = F.x - g.pos.x,
             B = F.z - g.pos.z,
@@ -88460,10 +88912,10 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           A = Math.sin(g.yaw + g.tyaw);
         (Oo.setFromMatrixPosition(l.gun.matrixWorld),
           (Oo.lengthSq() < 1e-6 || Math.abs(Oo.x - g.pos.x) > 2) &&
-            Oo.set(g.pos.x, g.pos.y + Yn.stand + 0.25, g.pos.z),
+            Oo.set(g.pos.x, g.pos.y + (Yn.stand + 0.25) * SC, g.pos.z),
           G1.set(k.pos.x, k.pos.y + 1, k.pos.z),
           Ho.copy(G1).sub(Oo).normalize(),
-          g.muzzle.copy(Oo).addScaledVector(Ho, 0.43));
+          g.muzzle.copy(Oo).addScaledVector(Ho, 0.43 * SC));
         let F =
           (c0.spreadFar + (c0.spreadNear - c0.spreadFar) * g.exposure) *
           (1 + n.playerSpeed * 0.3);
@@ -88484,9 +88936,9 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           s.fx.tracer(g.muzzle, YS, {
             color: 16760944,
             speed: 260,
-            width: 0.035,
+            width: 0.035 * SC,
           }),
-          s.fx.muzzleFlash(g.muzzle, Ho, { scale: 0.9 }),
+          s.fx.muzzleFlash(g.muzzle, Ho, { scale: 0.9 * SC }),
           s.render &&
             s.render.lightPool &&
             s.render.lightPool.flash(g.muzzle, 16756832, 22, 7, 0.05),
@@ -88495,6 +88947,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             pos: g.muzzle,
             dir: Ho,
             type: "hound",
+            kind: g.kind,
           }),
           (g.sP.v += 1.1),
           (g.sY.v -= 0.25));
@@ -88506,7 +88959,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         if (g.sw < 0) {
           g.idleT = F ? 0 : g.idleT + k;
           let H = g.speed + Math.abs(g.yawRate) * 0.5,
-            N = bo(0.27 - H * 0.026, 0.14, 0.27),
+            N = bo(0.27 - H * 0.026, 0.14 * Math.min(1, SC), 0.27),
             Z = -1,
             Q = 0;
           for (let J = 0; J < 2; J++) {
@@ -88563,6 +89016,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               type: "hound",
               enemy: g,
               speed: g.speed,
+              size: SC,
             }),
               (g.sY.v -= 0.12 + g.speed * 0.03),
               (g.lastPair = g.sw),
@@ -88577,7 +89031,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           H = (b[2].p.y + b[3].p.y) * 0.5,
           N = (b[0].p.y + b[2].p.y) * 0.5,
           Z = (b[1].p.y + b[3].p.y) * 0.5,
-          Q = (F + H) * 0.5 - g.pos.y,
+          Q = ((F + H) * 0.5 - g.pos.y) / SC,
           W = k > 0 ? (g.speed - g.prevSpeed) / k : 0,
           J = Math.atan2(H - F, 0.8) * 0.6 + bo(W * 0.006, -0.07, 0.07),
           G =
@@ -88610,9 +89064,9 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           de = Math.sin(j);
         for (let $ = 0; $ < 4; $++) {
           let se = b[$].p,
-            fe = se.x - g.pos.x,
-            me = se.y + Yn.footR * 0.6 - g.pos.y,
-            ge = se.z - g.pos.z,
+            fe = (se.x - g.pos.x) / SC,
+            me = (se.y - g.pos.y) / SC + Yn.footR * 0.6,
+            ge = (se.z - g.pos.z) / SC,
             ce = fe * C - ge * A - ee,
             P = me - le,
             D = fe * A + ge * C,
@@ -88652,8 +89106,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           let A = b[C];
           g.sw >= 0 && (A.p.y = g.pos.y);
           let F = g.yaw,
-            H = Yn.side[C] * (0.16 + o() * 0.2),
-            N = Yn.fore[C] * (0.05 + o() * 0.22) + (o() - 0.5) * 0.1;
+            H = Yn.side[C] * (0.16 + o() * 0.2) * SC,
+            N = (Yn.fore[C] * (0.05 + o() * 0.22) + (o() - 0.5) * 0.1) * SC;
           A.slide.set(
             H * Math.cos(F) + N * Math.sin(F),
             0,
@@ -88669,6 +89123,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             enemy: g,
             pos: g.pos,
             type: "hound",
+            kind: g.kind,
           }),
           n.addWreck(g));
       }
@@ -88814,6 +89269,90 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       PB = new K(0, -1, 0),
       nT = new K(),
       iT = new K();
+    // Machine kinds. Every kind rides on the Gull or the Hound chassis ("type",
+    // which audio, attack tokens and spawn lanes key on) with its own scale,
+    // paint, tuning and behaviour. A kind's tuning is its chassis table with a
+    // few values scaled (mul), replaced (set) or derived (get), read live, so
+    // the difficulty and Holdout scaling of the two base tables reaches them all.
+    //   Skua     small, fast flying charge: dives at the breacher and goes off.
+    //   Pelican  big, slow, high: lobs shells that burst where the ring is.
+    //   Whippet  small fast Hound with no gun, only the lunge. Comes in packs.
+    //   Mastiff  big slow Hound, long bursts, armoured except the head lens.
+    var KINDS = {
+      gull: { id: "gull", type: "gull", label: "Gull", pool: Bi.poolGulls },
+      hound: { id: "hound", type: "hound", label: "Hound", pool: Bi.poolHounds },
+      skua: {
+        id: "skua",
+        type: "gull",
+        label: "Skua",
+        tag: "S",
+        pool: 7,
+        scale: 0.66,
+        voice: 1.45,
+        paint: 12670234,
+        dive: !0,
+        boom: 1.3,
+        mul: { hp: 0.4, maxSpeed: 1.85, accel: 2.4, investigateSpeed: 1.6, patrolSpeed: 1.3 },
+        set: { hitRadius: 0.62, explodeRadius: 3.6, altMin: 3, altMax: 5.5 },
+        get: { explodeDamage: (b) => b.boltDamage * 8 },
+      },
+      pelican: {
+        id: "pelican",
+        type: "gull",
+        label: "Pelican",
+        tag: "P",
+        pool: 3,
+        scale: 1.7,
+        voice: 0.66,
+        paint: 3099981,
+        boom: 1.9,
+        lob: { speed: 15, time: [1.25, 2.3], radius: 4.2, damage: 9, size: 1.15, scatter: 1.1 },
+        mul: { hp: 3.2, maxSpeed: 0.62, orbitSpeed: 0.6, accel: 0.7, telegraph: 2.2, cooldown: 1.6, rangeMin: 1.25, rangeMax: 1.2, fireRange: 1.3 },
+        set: { hitRadius: 1.3, altMin: 7, altMax: 10, burst: 2, burstGap: 0.6, explodeRadius: 4.6, explodeDamage: 50 },
+      },
+      whippet: {
+        id: "whippet",
+        type: "hound",
+        label: "Whippet",
+        tag: "W",
+        pool: 7,
+        scale: 0.7,
+        voice: 1.35,
+        paint: 11833384,
+        melee: !0,
+        mul: { hp: 0.36, runSpeed: 1.7, stalkSpeed: 1.8, patrolSpeed: 1.4, accel: 1.8, turnRate: 1.7, lungeDamage: 0.55 },
+        set: { lungeRange: 3.3, lungeCooldown: 1.5, lungeSpeed: 11 },
+      },
+      mastiff: {
+        id: "mastiff",
+        type: "hound",
+        label: "Mastiff",
+        tag: "M",
+        pool: 3,
+        scale: 1.36,
+        voice: 0.7,
+        paint: 2501162,
+        armor: 0.65,
+        mul: { hp: 2.3, runSpeed: 0.62, stalkSpeed: 0.7, patrolSpeed: 0.8, accel: 0.7, turnRate: 0.75, burst: 2, shotDamage: 1.15, telegraph: 1.5, cooldown: 1.25, lungeDamage: 1.5, rangeMax: 1.25 },
+        set: { burstGap: 0.085 },
+      },
+    };
+    function kindTune(base, kind) {
+      let t = Object.create(base),
+        whole = { burst: 1 };
+      for (let k in kind.mul || {})
+        Object.defineProperty(t, k, {
+          enumerable: !0,
+          get: () => {
+            let v = base[k],
+              m = kind.mul[k];
+            return Array.isArray(v) ? v.map((x) => x * m) : whole[k] ? Math.round(v * m) : v * m;
+          },
+        });
+      for (let k in kind.set || {}) Object.defineProperty(t, k, { enumerable: !0, value: kind.set[k] });
+      for (let k in kind.get || {}) Object.defineProperty(t, k, { enumerable: !0, get: () => kind.get[k](base) });
+      return t;
+    }
     async function W5(n) {
       let e = su(+((n.params && n.params.eseed) || 9001)),
         t = [],
@@ -88997,6 +89536,9 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               F.from.copy(k),
               (F.len = 0));
           },
+          lob(k, C, A, F) {
+            return lobShell(k, C, A, F);
+          },
           addWreck(k) {
             for (i.push(k); i.length > Bi.maxWrecks; ) {
               let C = i.shift();
@@ -89014,7 +89556,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         h = WS(),
         p = VS(),
         d = [],
-        m = [];
+        m = [],
+        pools = { gull: d, hound: m };
       for (let k = 0; k < Bi.poolGulls; k++) {
         let C = XS(f, h, u, k);
         (d.push(C), s.add(C.rig.group));
@@ -89022,6 +89565,18 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       for (let k = 0; k < Bi.poolHounds; k++) {
         let C = jS(f, p, u, k);
         (m.push(C), s.add(C.rig.group));
+      }
+      // The other kinds: same two chassis, own paint, tuning and pool.
+      for (let k of Object.values(KINDS)) {
+        if (pools[k.id]) continue;
+        let air = k.type === "gull";
+        ((k.tune = kindTune(air ? Jy : tb, k)),
+          (k.shellMat = n.mats.get("armor_white", { triplanar: !0, vertexColors: !0, color: k.paint })),
+          (pools[k.id] = []));
+        for (let C = 0; C < k.pool; C++) {
+          let A = air ? XS(f, h, u, C, k) : jS(f, p, u, C, k);
+          (pools[k.id].push(A), s.add(A.rig.group));
+        }
       }
       let x = [];
       for (let k = 0; k < Bi.maxBolts; k++)
@@ -89047,6 +89602,157 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         (g.count = 0),
         g.instanceMatrix.setUsage(Ao),
         s.add(g));
+      // Shells: lobbed charges on a ballistic arc. Pelicans drop them on the
+      // breacher (a ring on the ground marks where each will land) and the
+      // breacher's launcher fires them back. A shell bursts on the first thing
+      // it meets; one fired by the breacher is a dud until it has armed.
+      let T3 = n.THREE || ut,
+        shells = [],
+        shellRoot = new At(),
+        shellGeo = new T3.SphereGeometry(0.1, 10, 8),
+        ringGeo = new T3.RingGeometry(0.86, 1, 40),
+        shHot = new T3.MeshBasicMaterial({ color: new Qe(16739370).multiplyScalar(9) }),
+        shCold = new T3.MeshBasicMaterial({ color: new Qe(12576767).multiplyScalar(7) }),
+        shDir = new K(),
+        shEnd = new K(),
+        shUp = new K(0, 1, 0);
+      (ringGeo.rotateX(-Math.PI / 2), (shellRoot.name = "shells"), s.add(shellRoot));
+      for (let k = 0; k < 14; k++) {
+        let C = new ht(shellGeo, shHot),
+          A = new ht(
+            ringGeo,
+            new T3.MeshBasicMaterial({
+              color: 16731450,
+              transparent: !0,
+              opacity: 0,
+              depthWrite: !1,
+              blending: T3.AdditiveBlending,
+              side: ln,
+              fog: !1,
+            }),
+          );
+        ((C.visible = A.visible = !1),
+          (C.castShadow = A.castShadow = !1),
+          (C.frustumCulled = A.frustumCulled = !1),
+          (A.renderOrder = 870),
+          shellRoot.add(C, A),
+          shells.push({ on: !1, mesh: C, ring: A, pos: C.position, vel: new K(), age: 0, life: 6, smokeT: 0 }));
+      }
+      function fireShell(k, C, A = {}) {
+        let F = shells.find((H) => !H.on);
+        if (!F) return null;
+        (Object.assign(F, {
+          on: !0,
+          age: 0,
+          smokeT: 0,
+          life: A.life || 6,
+          owner: A.owner || "enemy",
+          radius: A.radius || 4,
+          damage: A.damage || 60,
+          direct: A.direct || 0,
+          size: A.size || 1.2,
+          grav: A.gravity ?? 9.8,
+          arm: A.arm || 0,
+          onBurst: A.onBurst || null,
+        }),
+          F.pos.copy(k),
+          F.vel.copy(C),
+          (F.mesh.material = F.owner === "player" ? shCold : shHot),
+          F.mesh.scale.setScalar(A.scale || 1),
+          (F.mesh.visible = !0),
+          (F.ring.visible = !1));
+        if (A.mark) {
+          let H = A.mark.y;
+          try {
+            H = n.physics.groundHeight(A.mark.x, A.mark.z, A.mark.y + 1.5);
+          } catch {}
+          (F.ring.position.set(A.mark.x, (H > -50 ? H : A.mark.y) + 0.06, A.mark.z),
+            F.ring.scale.setScalar(F.radius * 0.8),
+            (F.ring.material.opacity = 0),
+            (F.ring.visible = !0));
+        }
+        return F;
+      }
+      // Lob from k to land on C after A seconds.
+      function lobShell(k, C, A, F = {}) {
+        let H = F.gravity ?? 9.8;
+        shDir.set((C.x - k.x) / A, (C.y - k.y) / A + 0.5 * H * A, (C.z - k.z) / A);
+        return fireShell(k, shDir, { ...F, mark: C });
+      }
+      function burstShell(k, C, A) {
+        ((k.on = !1), (k.mesh.visible = !1), (k.ring.visible = !1));
+        let F = k.owner === "player",
+          H = 0;
+        if (F && k.age < k.arm) {
+          // Not armed yet: it just clatters off.
+          try {
+            (n.fx.sparks(k.pos, C ? C.normal : shUp, 10),
+              n.events.emit("impact", { point: k.pos.clone(), normal: (C && C.normal) || shUp, dist: 0, surface: "metal", enemy: null, dir: shDir.clone(), from: "player" }));
+          } catch {}
+          A && A.enemy.alive && A.enemy.damage(k.direct || 20, A.point, shDir, A.part) && H++;
+        } else {
+          C && k.pos.addScaledVector(C.normal, 0.18);
+          try {
+            n.fx.explosion(k.pos.clone(), k.size);
+          } catch {}
+          A && A.enemy.alive && k.direct && (A.enemy.damage(k.direct, A.point, shDir, A.part), H++);
+          try {
+            H += n.combat.explode(k.pos, k.radius, k.damage, F ? "player" : "enemy") || 0;
+          } catch (N) {
+            console.error("[enemies] shell burst threw", N);
+          }
+        }
+        k.onBurst && k.onBurst(H);
+      }
+      function shellsTick(k) {
+        let C = n.player;
+        for (let A of shells) {
+          if (!A.on) continue;
+          ((A.age += k), (A.vel.y -= A.grav * k));
+          let F = A.vel.length(),
+            H = F * k;
+          shDir.copy(A.vel).multiplyScalar(1 / (F || 1));
+          let N = n.physics.raycast(A.pos, shDir, H + 0.06),
+            Z = N ? N.dist : H,
+            Q = !!N,
+            W = null;
+          if (A.owner === "player") {
+            let J = n.enemies.raycast(A.pos, shDir, Z);
+            J && ((W = J), (Z = J.dist), (Q = !0), (N = null));
+            // Proximity fuse: once armed, a near miss bursts beside the machine
+            // instead of sailing on past it.
+            if (!Q && A.age >= A.arm)
+              for (let G of n.enemies.list) {
+                if (!G.alive) continue;
+                shEnd.set(G.pos.x, G.pos.y + (G.type === "hound" ? 0.5 * (G.sc || 1) : 0), G.pos.z).sub(A.pos);
+                let te = shEnd.dot(shDir),
+                  oe = Math.min(Z, Math.max(0, te));
+                if (shEnd.lengthSq() - 2 * oe * te + oe * oe < 1.69) {
+                  ((Z = oe), (Q = !0), (N = null));
+                  break;
+                }
+              }
+          } else if (C && C.alive !== !1) {
+            (shEnd.copy(A.pos).addScaledVector(shDir, Z),
+              nT.set(C.pos.x, C.pos.y + 0.35, C.pos.z),
+              iT.set(C.pos.x, C.pos.y + (C.crouching ? 1 : 1.5), C.pos.z),
+              jD(A.pos, shEnd, nT, iT) < 0.3 && ((Q = !0), (N = null)));
+          }
+          A.pos.addScaledVector(shDir, Z);
+          if (Q || A.age > A.life || A.pos.y < Kn.seaY - 0.4) {
+            burstShell(A, N, W);
+            continue;
+          }
+          if (A.ring.visible) {
+            let J = 0.5 + 0.5 * Math.sin(A.age * 22);
+            A.ring.material.opacity = Math.min(1, A.age * 4) * (0.45 + 0.4 * J);
+          }
+          ((A.smokeT -= k),
+            A.smokeT <= 0 &&
+              ((A.smokeT = 0.045),
+              n.fx.smoke(A.pos, { size: 0.16, life: 0.6, rise: 0.15, count: 1, color: A.owner === "player" ? 9079434 : 5131854 })));
+        }
+      }
       let E = {
         point: new K(),
         normal: new K(),
@@ -89156,8 +89862,11 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         U = {
           list: t,
           TUNE: Bi,
+          kinds: KINDS,
+          fireShell,
+          lobShell,
           spawn(k, C, A = {}) {
-            let F = k === "gull" ? d : k === "hound" ? m : null;
+            let F = pools[k];
             if (!F) return null;
             let H = null;
             for (let N of F)
@@ -89165,9 +89874,10 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
                 H = N;
                 break;
               }
-            if (!H && k === "hound" && i.length) {
-              let N = i[0];
-              (f.retire(N), (H = N));
+            if (!H && KINDS[k].type === "hound") {
+              // Every body of this kind is out: reuse its oldest wreck.
+              let N = i.find((Z) => Z.kind === k);
+              N && (f.retire(N), (H = N));
             }
             return H
               ? ((H.id = I++),
@@ -89183,12 +89893,12 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               let N = t[H];
               if (!N.alive) continue;
               let Z = N.pos.x - k.x,
-                Q = N.pos.y + (N.type === "hound" ? 0.6 : 0) - k.y,
+                Q = N.pos.y + (N.type === "hound" ? 0.6 * (N.sc || 1) : 0) - k.y,
                 W = N.pos.z - k.z,
                 J = Z * C.x + Q * C.y + W * C.z;
               J < -1.5 ||
                 J > A + 1.5 ||
-                Z * Z + Q * Q + W * W - J * J > 1.7 ||
+                Z * Z + Q * Q + W * W - J * J > Math.max(1.7, N.bound || 0) ||
                 (F ||
                   (F = {
                     dist: 1 / 0,
@@ -89207,9 +89917,9 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             return k;
           },
           clear() {
-            for (let k of d) k.active && k._deactivate();
-            for (let k of m) k.active && k._deactivate();
+            for (let k in pools) for (let C of pools[k]) C.active && C._deactivate();
             ((t.length = 0), (i.length = 0), (f.tokens = 0));
+            for (let k of shells) ((k.on = !1), (k.mesh.visible = !1), (k.ring.visible = !1));
             for (let k of x) k.on = !1;
             ((g.count = 0), _ && _.light && (_.light.intensity = 0));
           },
@@ -89235,10 +89945,12 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               f.playerSpeed += (A - f.playerSpeed) * (1 - Math.exp(-6 * k));
             }
             for (let A = t.length - 1; A >= 0; A--) t[A]._update(k);
-            (M(k), z(k));
+            (M(k), shellsTick(k), z(k));
           },
           debug: {
             ctx: f,
+            pools,
+            shells,
             gulls: d,
             hounds: m,
             wrecks: i,
@@ -89321,6 +90033,16 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           (s = [2.1, 1, 2.3]),
           (o = [0.5, 0.62, 0.4]),
           (r = 1.25));
+      else if (i === "kinds")
+        (e.spawn("gull", t(-2.6, 2.3, -0.4), { passive: !0, hover: 2.3, patrolRadius: 0.02, yaw: 0.5 }),
+          e.spawn("skua", t(-0.6, 2.1, 0.2), { passive: !0, hover: 2.1, patrolRadius: 0.02, yaw: 0.5 }),
+          e.spawn("pelican", t(2.4, 3, -1.2), { passive: !0, hover: 3, patrolRadius: 0.02, yaw: 0.5 }),
+          e.spawn("whippet", t(-2.2, 0, 1.2), { passive: !0, yaw: 1.1, patrolRadius: 0.01 }),
+          e.spawn("hound", t(-0.2, 0, 0.6), { passive: !0, yaw: 1.1, patrolRadius: 0.01 }),
+          e.spawn("mastiff", t(2.6, 0, 0), { passive: !0, yaw: 1.1, patrolRadius: 0.01 }),
+          (s = [0.6, 1.9, 7.2]),
+          (o = [0.2, 1.25, 0]),
+          (r = 0.4));
       else if (i === "fight")
         (e.spawn("hound", t(-7, 0, -9), { state: "alert" }),
           e.spawn("hound", t(8, 0, -7), { state: "alert" }),
@@ -89465,7 +90187,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         L = si(
           "div",
           "h-ammo",
-          '<div class="h-cue"></div><div class="h-ammo-row"><b class="h-ammo-n">30</b><span class="h-ammo-r">120</span></div><div class="h-pips"></div><div class="h-wname"></div><div class="h-alt"></div>',
+          '<div class="h-cue"></div><div class="h-ammo-row"><b class="h-ammo-n">30</b><span class="h-ammo-r">120</span></div><div class="h-pips"></div><div class="h-wname"></div><div class="h-alt"></div><div class="h-slots"></div>',
         ),
         U = L.querySelector(".h-ammo-n"),
         k = L.querySelector(".h-ammo-r"),
@@ -89473,6 +90195,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         A = L.querySelector(".h-wname"),
         F = L.querySelector(".h-cue"),
         H = L.querySelector(".h-alt"),
+        hSlots = L.querySelector(".h-slots"),
         N = si("div", "h-marks");
       (t.append(N, i, c, m, b, x, y, E, w, S, R, L), e.appendChild(t));
       let Z = si(
@@ -89552,7 +90275,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         }),
         n.events.on("enemy:killed", (he) => {
           let V = String(
-            (he && (he.type || (he.enemy && he.enemy.type))) || "machine",
+            (he && (he.kind || (he.enemy && he.enemy.kind) || he.type || (he.enemy && he.enemy.type))) || "machine",
           ).toUpperCase();
           ((P = X.feed(`<b>${V}</b> destroyed`)), (D = n.time.frame));
         }),
@@ -89852,8 +90575,12 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             ((oe.name = ne.name), (A.textContent = ne.name || "")));
         let je = "";
         if (ne.slots && ne.slots.length > 1) {
-          let $e = ne.slots[0].id === ne.current ? ne.slots[1] : ne.slots[0],
-            Ke = n.input.device;
+          // Q goes back to the last weapon; the pad and touch button step on
+          // to the next one.
+          let Ke = n.input.device,
+            $e =
+              (Ke === "pad" || Ke === "touch" || n.input.touch ? ne.nextSlot : ne.lastSlot) ||
+              (ne.slots[0].id === ne.current ? ne.slots[1] : ne.slots[0]);
           je =
             (Ke === "pad"
               ? "<kbd>Y</kbd>"
@@ -89863,6 +90590,18 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             `<b>${$e.name || ""}</b> ${String(Math.max(0, $e.ammo | 0)).padStart(2, "0")} / ${$e.reserve === 1 / 0 ? "\u221E" : Math.max(0, $e.reserve | 0)}`;
         }
         je !== oe.alt && ((oe.alt = je), (H.innerHTML = je));
+        if (ne.slots && ne.slots.length > 2) {
+          // One box per weapon, numbered as the keys are.
+          let $e = ne.pending || ne.current,
+            Ke = "";
+          for (let Bt of ne.slots)
+            Ke += Bt.id === $e ? "o" : Bt.ammo <= 0 && Bt.reserve <= 0 ? "x" : "-";
+          Ke !== oe.slotKey &&
+            ((oe.slotKey = Ke),
+            (hSlots.innerHTML = [...Ke]
+              .map((Bt, Gt) => `<i class="${Bt === "o" ? "on" : Bt === "x" ? "out" : ""}">${Gt + 1}</i>`)
+              .join("")));
+        }
         let Ze = Ne <= Math.ceil(_e * 0.27),
           qe =
             ne.state === "reloading"
@@ -90149,7 +90888,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
     <div><dt>Fire</dt><dd>Left button</dd></div>
     <div><dt>Aim</dt><dd>Right button</dd></div>
     <div><dt>Reload</dt><dd><kbd>R</kbd></dd></div>
-    <div><dt>Swap weapon</dt><dd><kbd>Q</kbd>, wheel, or <kbd>1</kbd> <kbd>2</kbd></dd></div>
+    <div><dt>Weapons</dt><dd><kbd>1</kbd>\u2013<kbd>5</kbd> or wheel \xB7 <kbd>Q</kbd> last used</dd></div>
     <div><dt>Cut relay</dt><dd>Hold <kbd>E</kbd></dd></div>
     <div><dt>Jump</dt><dd><kbd>Space</kbd></dd></div>
     <div><dt>Sprint</dt><dd><kbd>Shift</kbd></dd></div>
@@ -90163,7 +90902,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
     <div><dt>Fire \xB7 Aim</dt><dd><kbd>RT</kbd> \xB7 <kbd>LT</kbd></dd></div>
     <div><dt>Reload</dt><dd><kbd>X</kbd></dd></div>
     <div><dt>Cut relay</dt><dd>Hold <kbd>X</kbd> at a relay</dd></div>
-    <div><dt>Swap weapon</dt><dd><kbd>Y</kbd> or D-pad</dd></div>
+    <div><dt>Next weapon</dt><dd><kbd>Y</kbd> or D-pad</dd></div>
     <div><dt>Jump</dt><dd><kbd>A</kbd></dd></div>
     <div><dt>Crouch</dt><dd><kbd>B</kbd> or <kbd>LB</kbd></dd></div>
     <div><dt>Sprint</dt><dd>Click the left stick</dd></div>
@@ -90211,8 +90950,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       </div>
       <aside class="m-legend" aria-label="Controls at a glance">
         <div><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move</span><span><kbd>Mouse</kbd> Look</span><span><kbd>LMB</kbd> Fire</span><span><kbd>RMB</kbd> Aim</span><span><kbd>R</kbd> Reload</span></div>
-        <div><span><kbd>Q</kbd> Sidearm</span><span><kbd>E</kbd> Cut relay</span><span><kbd>Space</kbd> Jump</span><span><kbd>Shift</kbd> Sprint</span><span><kbd>C</kbd> Crouch</span><span><kbd>Esc</kbd> Pause</span></div>
-        <div class="lg-pad"><em>Controller</em><span>Sticks move and look</span><span><kbd>RT</kbd> Fire</span><span><kbd>LT</kbd> Aim</span><span><kbd>X</kbd> Reload / cut</span><span><kbd>Y</kbd> Sidearm</span><span><kbd>A</kbd> Deploy</span></div>
+        <div><span><kbd>1</kbd>\u2013<kbd>5</kbd> Weapons</span><span><kbd>E</kbd> Cut relay</span><span><kbd>Space</kbd> Jump</span><span><kbd>Shift</kbd> Sprint</span><span><kbd>C</kbd> Crouch</span><span><kbd>Esc</kbd> Pause</span></div>
+        <div class="lg-pad"><em>Controller</em><span>Sticks move and look</span><span><kbd>RT</kbd> Fire</span><span><kbd>LT</kbd> Aim</span><span><kbd>X</kbd> Reload / cut</span><span><kbd>Y</kbd> Next weapon</span><span><kbd>A</kbd> Deploy</span></div>
         <div class="lg-touch"><em>Touch</em><span>Left thumb moves</span><span>Right thumb looks</span><span>Fire \xB7 Aim \xB7 Reload \xB7 Jump on screen</span></div>
       </aside>
     </section>
@@ -90799,6 +91538,42 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           },
         },
       },
+      // What each chapter's waves are made of. How many air and ground machines
+      // a wave gets still comes from the flow tables and the difficulty; a mix
+      // hands a share of that air or ground budget to another kind, so a wave
+      // keeps its weight but changes its shape. KIND_COST is how many Gulls or
+      // Hounds one machine of that kind stands in for.
+      KIND_COST = { skua: 0.6, pelican: 2.5, whippet: 0.6, mastiff: 2.5 },
+      KIND_AIR = { gull: 1, skua: 1, pelican: 1 },
+      KIND_ORDER = ["gull", "skua", "pelican", "hound", "whippet", "mastiff"],
+      // Where Hounds cannot go (the stack yard), each ground kind's stand-in.
+      KIND_ALOFT = { hound: "gull", whippet: "skua", mastiff: "pelican" },
+      CHAPTER_MIX = {
+        // waves: the three flow-table waves (Berth 4's relays, Berth 7's purge,
+        // the Kittiwake's escape). Waves written on a level's own objectives
+        // name their kinds directly.
+        1: { patrol: {}, waves: [{ whippet: 1 }, { skua: 0.7 }, { mastiff: 0.6, skua: 0.3 }], pursuit: ["gull", "gull", "whippet", "skua", "hound"] },
+        2: { patrol: { whippet: 0.5 }, waves: [{ whippet: 0.6 }, { skua: 0.6 }, { mastiff: 0.6, pelican: 0.4 }], pursuit: ["gull", "whippet", "skua", "hound"] },
+        3: { patrol: { skua: 0.4 }, waves: [{}, { whippet: 1, skua: 0.5 }, {}], pursuit: ["whippet", "skua", "gull"] },
+        4: { patrol: { whippet: 0.5 }, waves: [{}, {}, {}], pursuit: ["gull", "skua", "whippet", "hound"] },
+        5: { patrol: { skua: 0.5 }, waves: [{}, {}, {}], pursuit: ["gull", "skua", "skua"] },
+      }[SALT_LEVEL],
+      // Holdout cycles through these so no two waves in a row feel alike.
+      HOLDOUT_THEMES = [
+        { name: "", mix: {} },
+        { name: "Whippet pack", mix: { whippet: 0.8 } },
+        { name: "Skua swarm", mix: { skua: 0.7 } },
+        { name: "Mastiff", mix: { mastiff: 0.7 } },
+        { name: "Pelicans", mix: { pelican: 0.5, whippet: 0.4 } },
+        { name: "Everything", mix: { skua: 0.3, pelican: 0.3, whippet: 0.3, mastiff: 0.4 } },
+      ],
+      // Control names each new kind the first time it shows up in a run.
+      KIND_RADIO = {
+        skua: "Skuas \u2014 flying charges. Shoot them down before they reach you.",
+        pelican: "Pelican overhead. It drops shells \u2014 when you see the ring, get out of it.",
+        whippet: "Whippets \u2014 fast, no guns, all teeth. Do not let the pack close.",
+        mastiff: "That is a Mastiff. Armour everywhere but the head lens. Aim for the lens.",
+      },
       cs = {
         firstDelay: 3.5,
         breather: 9,
@@ -90812,7 +91587,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         resupply: 90,
         reserveCap: 240,
         heal: 35,
-        killScore: { gull: 100, hound: 250 },
+        killScore: { gull: 100, hound: 250, skua: 60, pelican: 450, whippet: 120, mastiff: 650 },
         waveBonus: 500,
         bestKey: "saltline.holdout.best",
       },
@@ -90871,7 +91646,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         wake: "It is moving. Stay out of the aisle it is running and watch the wheels.",
         vent: "It has stopped to vent \u2014 the shutters are open. Hit the drive cells now.",
         cut: [
-          "One cell gone. It is running hotter and faster \u2014 and it has called Gulls.",
+          "One cell gone. It is running hotter and faster \u2014 and it has called the flock.",
           "Two gone. One cell left. Wait for the vent and finish it.",
         ],
         all: "All three cells are dead and it is still coming. It has nothing left but mass. Boat is at the quay ladder \u2014 run.",
@@ -90889,6 +91664,26 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         low: "You are hit hard. Get behind steel and breathe.",
         done: "Breacher is aboard. Saltline is dark. Good work.",
       };
+    // Turn an air/ground budget into kinds. Kinds already named in base are
+    // kept as they are.
+    function waveMix(base, mix) {
+      let out = {};
+      for (let k of KIND_ORDER) out[k] = base[k] || 0;
+      for (let k in mix || {}) {
+        let cls = KIND_AIR[k] ? "gull" : "hound",
+          share = (base[cls] || 0) * mix[k];
+        share > 0 && ((out[k] += Math.max(1, Math.round(share / KIND_COST[k]))), (out[cls] -= share));
+      }
+      return ((out.gull = Math.max(0, Math.round(out.gull))), (out.hound = Math.max(0, Math.round(out.hound))), out);
+    }
+    // Spawn order for a wave: kinds interleaved, so a wave arrives mixed.
+    function waveList(counts) {
+      let list = [];
+      KIND_ORDER.forEach((k, ki) => {
+        for (let i = 0; i < (counts[k] || 0); i++) list.push({ k, at: (i + 0.5) / counts[k] + ki * 0.013 });
+      });
+      return list.sort((a, b) => a.at - b.at).map((e) => e.k);
+    }
     function pT(n) {
       let e = (n.render && n.render.post) || {},
         t = typeof e.saturation == "number" ? e.saturation : 1,
@@ -90989,11 +91784,9 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         xi.maxAlive += cs.extraAlive(Y);
         let V = cs.count(Y),
           ne = Math.round(V * cs.houndShare(Y)),
-          ye = [];
-        for (let ze = 0; ze < V; ze++) ye.push("gull");
-        for (let ze = 0; ze < ne; ze++)
-          ye[Math.min(V - 1, 1 + Math.floor((ze * V) / Math.max(1, ne)))] =
-            "hound";
+          theme = HOLDOUT_THEMES[(Y - 1) % HOLDOUT_THEMES.length],
+          ye = waveList(waveMix({ gull: V - ne, hound: ne }, theme.mix));
+        V = ye.length;
         let Te = 0,
           Re = 0,
           Ue = cs.stagger(Y);
@@ -91007,7 +91800,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           (g.waveHot = 30));
         let Ve = ((Math.atan2(Te, -Re) * 180) / Math.PI + 360) % 360;
         (o.warn &&
-          o.warn(`Wave ${Y} \u2014 ${dT[Math.round(Ve / 45) % 8]}`, 3.6),
+          o.warn(`Wave ${Y} \u2014 ${theme.name ? theme.name + " \u2014 " : ""}${dT[Math.round(Ve / 45) % 8]}`, 3.6),
           o.setObjective("Hold the berth"),
           m(),
           n.events.emit("holdout:wave", { wave: Y, count: V }));
@@ -91022,6 +91815,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           Y &&
             Number.isFinite(Y.reserve) &&
             (Y.reserve = Math.min(cs.reserveCap, Y.reserve + cs.resupply));
+          n.weapon.resupply && n.weapon.resupply(0.5);
         } catch {}
         (i.heal(cs.heal),
           g.wave % 2 === 0 && a(n.explosives, "reset"),
@@ -91054,7 +91848,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           C.state !== "playing" ||
           (g.kills++,
           (g.score +=
-            (cs.killScore[Y && Y.type] || 100) * (1 + 0.1 * (g.wave - 1))),
+            (cs.killScore[Y && (Y.kind || Y.type)] || 100) * (1 + 0.1 * (g.wave - 1))),
           m());
       });
       function b() {
@@ -91102,6 +91896,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           kills: 0,
           wavesCleared: 0,
           purge: null,
+          seen: {},
         },
         E = 0,
         M = xi.introSeconds,
@@ -91242,6 +92037,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           (g.purge = null),
           (g.escape = null),
           (g.step = 0),
+          (g.seen = {}),
           h(C.difficulty),
           (g.relays = k().map((Y, he) => {
             let V = (/([a-z0-9])$/i.exec(String(Y.id || "")) || [
@@ -91470,7 +92266,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           setTimeout(() => ee(!0), 700));
       }
       function j(Y) {
-        let he = Y === "gull" ? "air" : "ground",
+        let he = KIND_AIR[Y] ? "air" : "ground",
           V = (s && s.enemySpawns) || [],
           ne = V.filter((ye) => ye.type === he);
         return ne.length ? ne : V;
@@ -91496,7 +92292,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
                 : -(he - ze) / 4),
             ne)
           ) {
-            (L.copy(Ve.pos), (L.y += Y === "gull" ? 0 : 1));
+            (L.copy(Ve.pos), (L.y += KIND_AIR[Y] ? 0 : 1));
             let Ne = !0;
             try {
               Ne = n.physics.lineOfSight(L, i.eye);
@@ -91512,7 +92308,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
           (g.used.set(Te, g.time), Ue.copy(Te.pos));
           let Ve = (n.rng() - 0.5) * 2.4,
             ze = (n.rng() - 0.5) * 2.4,
-            Ge = Y === "gull";
+            Ge = !!KIND_AIR[Y];
           try {
             Ge || (Ge = n.physics.nav.isWalkable(Ue.x + Ve, Ue.z + ze));
           } catch {
@@ -91527,34 +92323,40 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             Hn(V.z + Math.sin(Ve) * 26, -26, 24),
           );
         }
-        return (Y === "gull" && Ue.y < 2.5 && (Ue.y = 6 + n.rng() * 3), Ue);
+        return (KIND_AIR[Y] && Ue.y < 2.5 && (Ue.y = 6 + n.rng() * 3), Ue);
       }
       function q(Y, he, V) {
         let ne = null;
-        // Some yards are no place for Hounds: send a Gull instead.
-        s && s.noHounds && Y === "hound" && ((Y = "gull"), he && he.y < 2.5 && (he.y = 6 + n.rng() * 3));
+        // Some yards are no place for Hounds: send the kind's flying stand-in.
+        s && s.noHounds && KIND_ALOFT[Y] && ((Y = KIND_ALOFT[Y]), he && he.y < 2.5 && (he.y = 6 + n.rng() * 3));
         try {
           ne = n.enemies.spawn(Y, he, V);
+          // Every body of that kind is already out: send the plain chassis.
+          !ne && Y !== "gull" && Y !== "hound" && (ne = n.enemies.spawn(KIND_AIR[Y] ? "gull" : "hound", he, V));
         } catch (ye) {
           console.error("[game] enemies.spawn threw", ye);
         }
         return ne;
       }
+      // First sight of a new kind in a run: Control says what it is.
+      function sayKind(Y) {
+        let he = Y && Y.kind;
+        !KIND_RADIO[he] || g.seen[he] || C.state !== "playing" || ((g.seen[he] = 1), o.radio && o.radio(KIND_RADIO[he], 3.8));
+      }
       function ue() {
-        let Y = (s.playerStart && s.playerStart.pos) || i.pos;
-        for (let he of ["gull", "hound"])
-          for (let V = 0; V < xi.patrol[he]; V++)
-            q(he, O(he, { minDist: 32, from: Y, preferHidden: !0 }), {
-              state: "patrol",
-            });
+        let Y = (s.playerStart && s.playerStart.pos) || i.pos,
+          he = waveMix(xi.patrol, p() ? null : CHAPTER_MIX.patrol);
+        for (let V of waveList(he))
+          q(V, O(V, { minDist: 32, from: Y, preferHidden: !0 }), {
+            state: "patrol",
+          });
       }
       function de(Y) {
         let he =
-            typeof Y == "object" ? Y : xi.waves[Math.min(Y, xi.waves.length - 1)],
-          V = [];
-        for (let Re = 0; Re < he.gull; Re++) V.push("gull");
-        for (let Re = 0; Re < he.hound; Re++)
-          V.splice(Math.min(V.length, 1 + Re * 2), 0, "hound");
+            typeof Y == "object"
+              ? waveMix(Y, null)
+              : waveMix(xi.waves[Math.min(Y, xi.waves.length - 1)], CHAPTER_MIX.waves[Math.min(Y, CHAPTER_MIX.waves.length - 1)]),
+          V = waveList(he);
         let ne = 0,
           ye = 0;
         (V.forEach((Re, Ue) => {
@@ -91600,7 +92402,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
               he < xi.pursuitMinAlive)
           ) {
             ((g.pursuitT = xi.pursuitEvery), g.pursuitLeft--);
-            let V = n.rng() < 0.6 ? "gull" : "hound";
+            let V = CHAPTER_MIX.pursuit[Math.floor(n.rng() * CHAPTER_MIX.pursuit.length)];
             g.queue.push({ type: V, pos: O(V), at: g.time + 0.5 });
           }
           g.pursuitT <= 0 &&
@@ -91630,12 +92432,16 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
         }
         return !1;
       }
-      (n.events.on("enemy:alert", () => {
+      (n.events.on("enemy:alert", (Y) => {
         ((g.alertT = 10),
           C.state === "playing" &&
             !g.contactSaid &&
-            ((g.contactSaid = !0), o.radio && o.radio(Vu.contact, 3.2)));
+            ((g.contactSaid = !0), o.radio && o.radio(Vu.contact, 3.2)),
+          sayKind(Y && Y.enemy));
       }),
+        n.events.on("enemy:spawn", (Y) => {
+          Y && Y.enemy && Y.enemy.mode !== "patrol" && sayKind(Y.enemy);
+        }),
         n.events.on("player:hit", () => {
           g.alertT = Math.max(g.alertT, 8);
         }),
@@ -91708,6 +92514,8 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       }
       function ce(Y) {
         ((Y.cut = !0), (Y.cutting = !1), (Y.t = 1), g.cut++, W(Y.o, "cut"));
+        // Each objective done hands back a third of the special weapons' ammo.
+        n.weapon && n.weapon.resupply && n.weapon.resupply(0.34);
         let he = g.relays.length;
         (n.events.emit("objective:done", { id: Y.id, index: g.cut, total: he }),
           o.setRelays && o.setRelays(g.cut, he),
@@ -91808,7 +92616,7 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
             !g.queue.length && se() < xi.pursuitMinAlive + 1))
         ) {
           P0.left--;
-          let V = n.rng() < 0.6 ? "gull" : "hound";
+          let V = CHAPTER_MIX.pursuit[Math.floor(n.rng() * CHAPTER_MIX.pursuit.length)];
           g.queue.push({ type: V, pos: O(V, { from: cfg.pos }), at: g.time + 0.5 });
         }
         f0 >= 1 &&
@@ -91884,9 +92692,9 @@ uniform float uArmWet; varying vec4 vArmRest; varying vec4 vArmHand; varying vec
       (n.events.on("weapon:fire", (Y) => {
         r.rumble &&
           r.rumble(
-            Y && Y.weapon === "pistol" ? 0.35 : 0.18,
-            Y && Y.weapon === "pistol" ? 0.6 : 0.5,
-            55,
+            ({ pistol: 0.35, shotgun: 0.75, marksman: 0.6, launcher: 0.8 })[Y && Y.weapon] || 0.18,
+            ({ pistol: 0.6, shotgun: 0.9, marksman: 0.8, launcher: 0.9 })[Y && Y.weapon] || 0.5,
+            Y && ARSENAL.some((he) => he.id === Y.weapon) ? 110 : 55,
           );
       }),
         n.events.on("player:hit", (Y) => {
